@@ -1,0 +1,343 @@
+import { FormEvent, useEffect, useState } from "react";
+import { Plus, Save, Trash2, Pencil, X } from "lucide-react";
+import toast from "react-hot-toast";
+import { api } from "../api/client";
+import { MenuItem } from "../types";
+import { money } from "../utils/format";
+import { foodTypeLabel } from "../utils/gujarati";
+
+export function MenuPage() {
+  const [items, setItems] = useState<MenuItem[]>([]);
+
+  const defaultForm = {
+    name: "",
+    code: "",
+    category: "Pizza",
+    price: 0,
+    foodType: "veg" as const,
+    imageUrl: "",
+  };
+
+  const [form, setForm] = useState(defaultForm);
+
+  const [editModal, setEditModal] = useState(false);
+  const [editItem, setEditItem] = useState<MenuItem | null>(null);
+
+  async function load() {
+    const res = await api.get("/menu");
+    setItems(res.data);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+
+    await api.post("/menu", form);
+
+    setForm(defaultForm);
+
+    toast.success("મેનુ વસ્તુ ઉમેરાઈ");
+
+    load();
+  }
+
+  async function toggle(item: MenuItem) {
+    await api.patch(`/menu/${item._id}`, {
+      isAvailable: !item.isAvailable,
+    });
+
+    load();
+  }
+
+  async function remove(id: string) {
+    await api.delete(`/menu/${id}`);
+
+    toast.success("વસ્તુ કાઢી નાખી");
+
+    load();
+  }
+
+  function openEdit(item: MenuItem) {
+    setEditItem(item);
+    setEditModal(true);
+  }
+
+  async function updateItem() {
+    if (!editItem) return;
+
+    await api.patch(`/menu/${editItem._id}`, editItem);
+
+    toast.success("મેનુ અપડેટ થયું");
+
+    setEditModal(false);
+
+    load();
+  }
+
+  return (
+    <div className="min-h-screen space-y-6">
+      {" "}
+      <div className="flex flex-col gap-4 rounded-2xl border border-white/70 bg-white/80 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/75 md:flex-row md:items-center md:justify-between">
+        <div>
+          <span className="inline-flex items-center rounded-full bg-saffron/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-saffron">
+            મેનુ મેનેજમેન્ટ
+          </span>
+
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-gray-950 dark:text-white sm:text-4xl">
+            રેસ્ટોરન્ટ મેનુ
+          </h1>
+
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500 dark:text-gray-400">
+            ખાદ્ય વસ્તુઓ બનાવો, અપડેટ કરો અને મેનેજ કરો.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-saffron/15 bg-saffron/5 px-5 py-3">
+          <p className="text-xs text-gray-500">કુલ વસ્તુઓ</p>
+          <p className="mt-1 text-3xl font-black text-saffron">{items.length}</p>
+        </div>
+      </div>
+      {/* ADD FORM */}
+      <form
+        onSubmit={submit}
+        className="grid gap-4 rounded-2xl border border-white/70 bg-white/85 p-4 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/75 sm:p-5 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto]"
+      >
+        <input
+          className="input"
+          placeholder="ખાદ્ય વસ્તુ"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          required
+        />
+
+        <input
+          className="input"
+          placeholder="વસ્તુ કોડ"
+          value={form.code}
+          onChange={(e) => setForm({ ...form, code: e.target.value })}
+        />
+
+        <input
+          className="input"
+          placeholder="કેટેગરી"
+          value={form.category}
+          onChange={(e) => setForm({ ...form, category: e.target.value })}
+          required
+        />
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-saffron">
+            ₹
+          </span>
+
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="કિંમત દાખલ કરો"
+            value={form.price === 0 ? "" : form.price}
+            onChange={(e) => {
+              const value = e.target.value;
+
+              if (/^\d*$/.test(value)) {
+                setForm({
+                  ...form,
+                  price: value === "" ? 0 : Number(value),
+                });
+              }
+            }}
+            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition placeholder:text-gray-400 focus:border-saffron focus:ring-4 focus:ring-saffron/20 dark:border-white/10 dark:bg-white/10 dark:text-white"
+          />
+        </div>
+
+        <select
+          className="input"
+          value={form.foodType}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              foodType: e.target.value as any,
+            })
+          }
+        >
+          <option value="veg">વેજ</option>
+          <option value="non-veg">નોન-વેજ</option>
+        </select>
+
+        <button className="btn-primary">
+          <Plus size={17} />
+          ઉમેરો
+        </button>
+      </form>
+      {/* MENU LIST */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {items.map((item) => (
+          <div
+            key={item._id}
+            className="group rounded-2xl border border-white/70 bg-white/85 p-5 shadow-sm backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:border-saffron/25 hover:shadow-soft dark:border-white/10 dark:bg-gray-900/75"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{item.name}</h3>
+
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {item.code && `${item.code} • `}
+                  {item.category}
+                </p>
+
+                <span
+                  className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                    item.foodType === "veg"
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                      : item.foodType === "egg"
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                        : "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+                  }`}
+                >
+                  {foodTypeLabel(item.foodType)}
+                </span>
+              </div>
+
+              <div className="text-right">
+                <p className="text-2xl font-black text-saffron">
+                  {money(item.price)}
+                </p>
+
+                <span
+                  className={`mt-2 inline-flex rounded-full px-2 py-1 text-xs font-bold ${
+                    item.isAvailable
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                      : "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+                  }`}
+                >
+                  {item.isAvailable ? "ઉપલબ્ધ" : "ઉપલબ્ધ નથી"}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => toggle(item)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-50 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+              >
+                <Save size={16} />
+                બદલો
+              </button>
+
+              <button
+                onClick={() => openEdit(item)}
+                className="rounded-lg bg-sky-50 p-3 text-sky-700 transition hover:bg-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20"
+              >
+                <Pencil size={16} />
+              </button>
+
+              <button
+                onClick={() => remove(item._id)}
+                className="rounded-lg bg-rose-50 p-3 text-rose-700 transition hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* EDIT MODAL */}
+      {editModal && editItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className="glass w-full max-w-lg rounded-2xl p-6 shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-2xl font-black">મેનુ વસ્તુ સંપાદિત કરો</h2>
+
+              <button className="btn-soft p-2" onClick={() => setEditModal(false)}>
+                <X />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                className="input w-full"
+                placeholder="ખાદ્ય વસ્તુ"
+                value={editItem.name}
+                onChange={(e) =>
+                  setEditItem({
+                    ...editItem,
+                    name: e.target.value,
+                  })
+                }
+              />
+
+              <input
+                className="input w-full"
+                placeholder="વસ્તુ કોડ"
+                value={editItem.code}
+                onChange={(e) =>
+                  setEditItem({
+                    ...editItem,
+                    code: e.target.value,
+                  })
+                }
+              />
+
+              <input
+                className="input w-full"
+                placeholder="કેટેગરી"
+                value={editItem.category}
+                onChange={(e) =>
+                  setEditItem({
+                    ...editItem,
+                    category: e.target.value,
+                  })
+                }
+              />
+
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-saffron">
+                  ₹
+                </span>
+
+                <input
+                  className="input w-full pl-10"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="કિંમત દાખલ કરો"
+                  value={editItem.price || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    if (/^\d*$/.test(value)) {
+                      setEditItem({
+                        ...editItem,
+                        price: value === "" ? 0 : Number(value),
+                      });
+                    }
+                  }}
+                />
+              </div>
+
+              <select
+                className="input w-full"
+                value={editItem.foodType}
+                onChange={(e) =>
+                  setEditItem({
+                    ...editItem,
+                    foodType: e.target.value as any,
+                  })
+                }
+              >
+                <option value="veg">વેજ</option>
+                <option value="non-veg">નોન-વેજ</option>
+                <option value="egg">ઇંડા</option>
+              </select>
+
+              <button onClick={updateItem} className="btn-primary w-full">
+                <Save size={18} />
+                મેનુ અપડેટ કરો
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

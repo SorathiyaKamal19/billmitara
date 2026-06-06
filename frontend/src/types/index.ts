@@ -1,0 +1,106 @@
+export type Role = 'owner' | 'manager' | 'waiter' | 'chef';
+
+export interface Restaurant {
+  _id: string;
+  name: string;
+  address?: string;
+  phone?: string;
+  gstNumber?: string;
+  gstEnabled: boolean;
+  gstRate: number;
+  takeawayChargeEnabled: boolean;
+  takeawayCharge: number;
+  parcelCharge?: number;
+  brandColor: string;
+  qrMenuUrl?: string;
+}
+
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: Role;
+  restaurant: Restaurant;
+  phone?: string;
+  isActive?: boolean;
+}
+
+export interface MenuItem {
+  _id: string;
+  name: string;
+  code?: string;
+  category: string;
+  price: number;
+  imageUrl?: string;
+  foodType: 'veg' | 'non-veg' | 'egg';
+  isAvailable: boolean;
+  prepTimeMinutes: number;
+}
+
+export interface RestaurantTable {
+  _id: string;
+  name: string;
+  capacity: number;
+  zone: string;
+  status: 'available' | 'running' | 'reserved' | 'cleaning';
+  currentOrder?: Order;
+}
+
+export interface OrderItem {
+  _id?: string;
+  menuItem: string;
+  name: string;
+  category?: string;
+  price: number;
+  quantity: number;
+  foodType?: string;
+  note?: string;
+  status?: string;
+}
+
+export interface Order {
+  _id: string;
+  table?: string;
+  tableName?: string;
+  type: 'dine-in' | 'takeaway';
+  status: 'running' | 'in-kitchen' | 'ready' | 'billed' | 'cancelled';
+  customerName?: string;
+  customerMobile?: string;
+  items: OrderItem[];
+  subtotal: number;
+  discountType: 'fixed' | 'percentage';
+  discountValue: number;
+  discount: number;
+  takeawayCharge: number;
+  parcelCharge: number;
+  gstEnabled: boolean;
+  gstRate: number;
+  gst: number;
+  total: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface Invoice {
+  _id: string;
+  billNumber: string;
+  customerName?: string;
+  customerMobile?: string;
+  subtotal: number;
+  gst: number;
+  total: number;
+  pdfUrl?: string;
+  whatsappStatus: string;
+  paymentMode?: 'cash' | 'upi' | 'partial';
+  payments?: { method: 'cash' | 'upi'; amount: number }[];
+  createdAt: string;
+}
+
+export interface Customer {
+  _id: string;
+  name?: string;
+  mobile: string;
+  totalVisits: number;
+  totalSpending: number;
+  lastVisitAt?: string;
+}

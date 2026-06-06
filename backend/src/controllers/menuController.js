@@ -1,0 +1,60 @@
+import { z } from 'zod';
+import { MenuItem } from '../models/MenuItem.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+
+const menuSchema = z.object({
+  name: z.string().min(2),
+  code: z.string().optional().or(z.literal('')),
+  category: z.string().min(2),
+  price: z.number().nonnegative(),
+  imageUrl: z.string().optional().or(z.literal('')),
+  foodType: z.enum(['veg', 'non-veg', 'egg']).default('veg'),
+  isAvailable: z.boolean().optional(),
+  prepTimeMinutes: z.number().int().nonnegative().optional()
+});
+
+export const listMenu = asyncHandler(async (req, res) => {
+  const query = { restaurant: req.user.restaurant };
+  if (req.query.q) {
+    query.$or = [
+      { name: new RegExp(req.query.q, 'i') },
+      { code: new RegExp(req.query.q, 'i') },
+      { category: new RegExp(req.query.q, 'i') }
+    ];
+  }
+  if (req.query.category) query.category = req.query.category;
+  const items = await MenuItem.find(query).sort({ category: 1, name: 1 });
+  res.json(items);
+});
+
+export const mostSellingMenu = asyncHandler(async (req, res) => {
+  const { Order } = await import('../models/Order.js');
+  const rows = await Order.aggregate([
+    { $match: { restaurant: req.user.restaurant, status: { $ne: 'cancelled' } } },
+    { $unwind: '$items' },
+    { $group: { _id: '$items.menuItem', quantity: { $sum: '$items.quantity' } } },
+    { $sort: { quantity: -1 } },
+    { $limit: 12 }
+  ]);
+  const ids = rows.map((row) => row._id).filter(Boolean);
+  const items = await MenuItem.find({ _id: { $in: ids }, restaurant: req.user.restaurant, isAvailable: true });
+  const rank = new Map(rows.map((row, index) => [String(row._id), index]));
+  res.json(items.sort((a, b) => (rank.get(String(a._id)) ?? 999) - (rank.get(String(b._id)) ?? 999)));
+});
+
+export const createMenuItem = asyncHandler(async (req, res) => {
+  const input = menuSchema.parse(req.body);
+  const item = await MenuItem.create({ ...input, restaurant: req.user.restaurant });
+  res.status(201).json(item);
+});
+
+export const updateMenuItem = asyncHandler(async (req, res) => {
+  const input = menuSchema.partial().parse(req.body);
+  const item = await MenuItem.findOneAndUpdate({ _id: req.params.id, restaurant: req.user.restaurant }, input, { new: true });
+  res.json(item);
+});
+
+export const deleteMenuItem = asyncHandler(async (req, res) => {
+  await MenuItem.findOneAndDelete({ _id: req.params.id, restaurant: req.user.restaurant });
+  res.status(204).send();
+});
