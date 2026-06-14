@@ -28,14 +28,20 @@ const orderSchema = new mongoose.Schema(
     discountType: { type: String, enum: ['fixed', 'percentage'], default: 'fixed' },
     discountValue: { type: Number, default: 0 },
     discount: { type: Number, default: 0 },
+    discountReason: String,
     takeawayCharge: { type: Number, default: 0 },
     parcelCharge: { type: Number, default: 0 },
     gstEnabled: { type: Boolean, default: true },
     gstRate: { type: Number, default: 5 },
     gst: { type: Number, default: 0 },
+    exactTotal: { type: Number, default: 0 },
+    roundOff: { type: Number, default: 0 },
     total: { type: Number, default: 0 },
     notes: String,
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    cancellationReason: String,
+    cancelledAt: Date,
+    cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   },
   { timestamps: true }
 );

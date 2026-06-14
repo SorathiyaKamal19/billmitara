@@ -6,6 +6,21 @@ export function calculateOrderTotals(items, { discountType = 'fixed', discountVa
   const charge = Number(takeawayCharge || parcelCharge || 0);
   const taxable = Math.max(subtotal + charge - discountAmount, 0);
   const gst = gstEnabled ? Number(((taxable * Number(gstRate || 0)) / 100).toFixed(2)) : 0;
-  const total = Number((taxable + gst).toFixed(2));
-  return { subtotal, discountType, discountValue: Number(rawDiscountValue || 0), discount: discountAmount, takeawayCharge: charge, parcelCharge: charge, gstEnabled: Boolean(gstEnabled), gstRate: gstEnabled ? gstRate : 0, gst, total };
+  const exactTotal = Number((taxable + gst).toFixed(2));
+  const roundedTotal = Math.round(exactTotal);
+  const roundOff = Number((roundedTotal - exactTotal).toFixed(2));
+  return {
+    subtotal,
+    discountType,
+    discountValue: Number(rawDiscountValue || 0),
+    discount: discountAmount,
+    takeawayCharge: charge,
+    parcelCharge: charge,
+    gstEnabled: Boolean(gstEnabled),
+    gstRate: gstEnabled ? gstRate : 0,
+    gst,
+    exactTotal,
+    roundOff,
+    total: roundedTotal
+  };
 }

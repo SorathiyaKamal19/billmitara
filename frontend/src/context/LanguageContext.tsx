@@ -339,29 +339,7 @@ export function LanguageProvider({
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, language);
-    document.documentElement.lang =
-      language === 'en' ? 'en' : 'gu';
-
-    const run = () => translateDom(language);
-    run();
-
-    const observer = new MutationObserver(run);
-    const root = document.getElementById('root');
-    if (root) {
-      observer.observe(root, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-        attributes: true,
-        attributeFilter: [
-          'placeholder',
-          'aria-label',
-          'title'
-        ]
-      });
-    }
-
-    return () => observer.disconnect();
+    document.documentElement.lang = language === 'en' ? 'en' : 'gu';
   }, [language]);
 
   const value = useMemo(

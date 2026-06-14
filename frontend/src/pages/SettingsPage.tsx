@@ -20,9 +20,11 @@ import {
 import toast from 'react-hot-toast';
 
 import { api } from '../api/client';
+import { useLanguage } from '../context/LanguageContext';
 import { Restaurant } from '../types';
 
 export function SettingsPage() {
+  const { t } = useLanguage();
   const [settings, setSettings] =
     useState<Partial<Restaurant>>({});
 
@@ -47,9 +49,7 @@ export function SettingsPage() {
 
     setShowGSTModal(false);
 
-    toast.success(
-      'સેટિંગ્સ સફળતાપૂર્વક અપડેટ થઈ'
-    );
+    toast.success(t('સેટિંગ્સ સફળતાપૂર્વક અપડેટ થઈ', 'Settings updated successfully'));
   }
 
   return (
@@ -70,16 +70,16 @@ export function SettingsPage() {
               <Sparkles size={16} />
 
               <span className="text-sm font-bold">
-                BillMitara સ્માર્ટ POS
+                BillMitara {t('સ્માર્ટ POS', 'Smart POS')}
               </span>
             </div>
 
             <h1 className="text-4xl font-black leading-tight">
-              રેસ્ટોરન્ટ સેટિંગ્સ
+              {t('રેસ્ટોરન્ટ સેટિંગ્સ', 'Restaurant Settings')}
             </h1>
 
             <p className="mt-3 max-w-2xl text-white/90">
-              રેસ્ટોરન્ટ પ્રોફાઇલ, ટેક્સ, બ્રાન્ડિંગ, ટેકઅવે ચાર્જ અને POS સેટિંગ્સ મેનેજ કરો.
+              {t('રેસ્ટોરન્ટ પ્રોફાઇલ, ટેક્સ, બ્રાન્ડિંગ, ટેકઅવે ચાર્જ અને POS સેટિંગ્સ મેનેજ કરો.', 'Manage restaurant profile, taxation, branding, takeaway charges and POS configuration.')}
             </p>
           </div>
 
@@ -87,7 +87,7 @@ export function SettingsPage() {
 
           <div className="rounded-3xl border border-white/20 bg-white/10 p-5 backdrop-blur-xl">
             <p className="text-xs font-bold uppercase tracking-widest text-white/70">
-              સંચાલિત
+              {t('સંચાલિત', 'Powered By')}
             </p>
 
             <h2 className="mt-1 text-3xl font-black">
@@ -95,7 +95,7 @@ export function SettingsPage() {
             </h2>
 
             <p className="mt-2 text-sm text-white/80">
-              સ્માર્ટ રેસ્ટોરન્ટ POS
+              {t('સ્માર્ટ રેસ્ટોરન્ટ POS', 'Smart Restaurant POS')}
             </p>
           </div>
         </div>
@@ -128,11 +128,11 @@ export function SettingsPage() {
 
               <div>
                 <h2 className="text-2xl font-black">
-                  રેસ્ટોરન્ટ માહિતી
+                  {t('રેસ્ટોરન્ટ માહિતી', 'Restaurant Information')}
                 </h2>
 
                 <p className="text-sm text-gray-500">
-                  રેસ્ટોરન્ટ વિગતો ગોઠવો
+                  {t('રેસ્ટોરન્ટ વિગતો ગોઠવો', 'Configure your restaurant details')}
                 </p>
               </div>
             </div>
@@ -142,7 +142,7 @@ export function SettingsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-bold">
-                  POS ડિસ્પ્લે નામ
+                  {t('POS ડિસ્પ્લે નામ', 'POS Display Name')}
                 </label>
 
                 <div className="relative">
@@ -153,7 +153,7 @@ export function SettingsPage() {
 
                   <input
                     className="input pl-10"
-                    placeholder="રેસ્ટોરન્ટનું નામ"
+                    placeholder={t('રેસ્ટોરન્ટનું નામ', 'Restaurant name')}
                     value={settings.name || ''}
                     onChange={(e) =>
                       setSettings({
@@ -169,7 +169,7 @@ export function SettingsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-bold">
-                  ફોન નંબર
+                  {t('ફોન નંબર', 'Phone Number')}
                 </label>
 
                 <div className="relative">
@@ -180,7 +180,7 @@ export function SettingsPage() {
 
                   <input
                     className="input pl-10"
-                    placeholder="ફોન"
+                    placeholder={t('ફોન', 'Phone')}
                     value={settings.phone || ''}
                     onChange={(e) =>
                       setSettings({
@@ -196,7 +196,7 @@ export function SettingsPage() {
 
               <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-bold">
-                  રેસ્ટોરન્ટ સરનામું
+                  {t('રેસ્ટોરન્ટ સરનામું', 'Restaurant Address')}
                 </label>
 
                 <div className="relative">
@@ -207,7 +207,7 @@ export function SettingsPage() {
 
                   <textarea
                     className="input min-h-[120px] pl-10"
-                    placeholder="રેસ્ટોરન્ટ સરનામું"
+                    placeholder={t('રેસ્ટોરન્ટ સરનામું', 'Restaurant Address')}
                     value={settings.address || ''}
                     onChange={(e) =>
                       setSettings({
@@ -231,11 +231,11 @@ export function SettingsPage() {
 
               <div>
                 <h2 className="text-2xl font-black">
-                  GST ગોઠવણી
+                  {t('GST ગોઠવણી', 'GST Configuration')}
                 </h2>
 
                 <p className="text-sm text-gray-500">
-                  GST ગણતરી અને ટેક્સ ગોઠવો
+                  {t('GST ગણતરી અને ટેક્સ ગોઠવો', 'Set up GST calculation and taxation')}
                 </p>
               </div>
             </div>
@@ -246,11 +246,11 @@ export function SettingsPage() {
               <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                 <div>
                   <p className="font-black">
-                    GST ચાલુ
+                    {t('GST ચાલુ', 'GST Enabled')}
                   </p>
 
                   <p className="text-sm text-gray-500">
-                    ઇન્વોઇસ અને બિલિંગમાં GST ચાલુ કરો
+                    {t('ઇન્વોઇસ અને બિલિંગમાં GST ચાલુ કરો', 'Enable GST in invoices and billing')}
                   </p>
                 </div>
 
@@ -280,12 +280,12 @@ export function SettingsPage() {
                 <div className="grid gap-5 md:grid-cols-2">
                   <div>
                     <label className="mb-2 block text-sm font-bold">
-                      GST નંબર
+                      {t('GST નંબર', 'GST Number')}
                     </label>
 
                     <input
                       className="input"
-                        placeholder="GST નંબર"
+                        placeholder={t('GST નંબર', 'GST Number')}
                       value={
                         settings.gstNumber || ''
                       }
@@ -301,7 +301,7 @@ export function SettingsPage() {
 
                   <div>
                     <label className="mb-2 block text-sm font-bold">
-                      GST ટકા
+                      {t('GST ટકા', 'GST Percentage')}
                     </label>
 
                     <div className="relative">
@@ -343,11 +343,11 @@ export function SettingsPage() {
 
               <div>
                 <h2 className="text-2xl font-black">
-                  ટેકઅવે ચાર્જ
+                  {t('ટેકઅવે ચાર્જ', 'Takeaway Charge')}
                 </h2>
 
                 <p className="text-sm text-gray-500">
-                  ટેકઅવે અને પાર્સલ ફી ગોઠવો
+                  {t('ટેકઅવે અને પાર્સલ ફી ગોઠવો', 'Configure takeaway and parcel fees')}
                 </p>
               </div>
             </div>
@@ -356,11 +356,11 @@ export function SettingsPage() {
               <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                 <div>
                   <p className="font-black">
-                    ચાર્જ ચાલુ કરો
+                    {t('ચાર્જ ચાલુ કરો', 'Enable Charges')}
                   </p>
 
                   <p className="text-sm text-gray-500">
-                    પાર્સલ ફી લાગુ કરો
+                    {t('પાર્સલ / ટેકઅવે ફી લાગુ કરો', 'Apply parcel / takeaway fees')}
                   </p>
                 </div>
 
@@ -382,23 +382,25 @@ export function SettingsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-bold">
-                  ટેકઅવે ચાર્જ
+                  {t('પાર્સલ / ટેકઅવે ચાર્જ (₹)', 'Parcel / Takeaway Charge (₹)')}
                 </label>
 
                 <input
                   className="input"
                   type="number"
-                  placeholder="ચાર્જ"
+                  min={0}
+                  placeholder="Parcel charge"
                   value={
-                    settings.takeawayCharge || 0
+                    settings.parcelCharge ?? settings.takeawayCharge ?? 0
                   }
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
                     setSettings({
                       ...settings,
-                      takeawayCharge:
-                        Number(e.target.value)
-                    })
-                  }
+                      parcelCharge: value,
+                      takeawayCharge: value
+                    });
+                  }}
                 />
               </div>
             </div>
@@ -421,11 +423,11 @@ export function SettingsPage() {
 
               <div>
                 <h2 className="text-xl font-black">
-                  ગોઠવણી સારાંશ
+                  {t('ગોઠવણી સારાંશ', 'Configuration Summary')}
                 </h2>
 
                 <p className="text-sm text-gray-500">
-                  હાલની ગોઠવણીની ઝલક
+                  {t('હાલની ગોઠવણીની ઝલક', 'Current setup overview')}
                 </p>
               </div>
             </div>
@@ -433,7 +435,7 @@ export function SettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 dark:bg-white/5">
                 <span className="text-sm">
-                  GST સ્થિતિ
+                  {t('GST સ્થિતિ', 'GST Status')}
                 </span>
 
                 <span
@@ -444,14 +446,14 @@ export function SettingsPage() {
                   }`}
                 >
                   {settings.gstEnabled
-                    ? 'સક્રિય'
-                    : 'બંધ'}
+                    ? t('સક્રિય', 'Enabled')
+                    : t('બંધ', 'Disabled')}
                 </span>
               </div>
 
               <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 dark:bg-white/5">
                 <span className="text-sm">
-                  GST દર
+                  {t('GST દર', 'GST Rate')}
                 </span>
 
                 <span className="font-black">
@@ -461,12 +463,13 @@ export function SettingsPage() {
 
               <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 dark:bg-white/5">
                 <span className="text-sm">
-                  ટેકઅવે ચાર્જ
+                  {t('પાર્સલ / ટેકઅવે ચાર્જ', 'Parcel / Takeaway Charge')}
                 </span>
 
                 <span className="font-black">
                   ₹
-                  {settings.takeawayCharge ||
+                  {settings.parcelCharge ??
+                    settings.takeawayCharge ??
                     0}
                 </span>
               </div>
@@ -477,7 +480,7 @@ export function SettingsPage() {
 
           <button className="btn-primary w-full py-4 text-base shadow-2xl">
             <Save size={20} />
-            રેસ્ટોરન્ટ સેટિંગ્સ સાચવો
+            {t('રેસ્ટોરન્ટ સેટિંગ્સ સાચવો', 'Save Restaurant Settings')}
           </button>
         </div>
       </form>
@@ -494,19 +497,19 @@ export function SettingsPage() {
 
               <div>
                 <h2 className="text-2xl font-black">
-                  GST ફેરફારોની પુષ્ટિ કરો
+                  {t('GST ફેરફારોની પુષ્ટિ કરો', 'Confirm GST Changes')}
                 </h2>
 
                 <p className="mt-2 text-sm text-gray-500">
-                  GST ચાલુ થશે સાથે{' '}
+                  {t('GST ચાલુ થશે સાથે', 'GST will be enabled with')}{' '}
                   <span className="font-bold text-saffron">
                     {settings.gstRate || 5}%
                   </span>{' '}
-                  ટેક્સ.
+                  {t('ટેક્સ.', 'tax.')}
                 </p>
 
                 <p className="mt-1 text-sm text-gray-500">
-                  આ ભવિષ્યના બધા ઇન્વોઇસને અસર કરશે.
+                  {t('આ ભવિષ્યના બધા ઇન્વોઇસને અસર કરશે.', 'This affects all future invoices.')}
                 </p>
               </div>
             </div>
@@ -520,7 +523,7 @@ export function SettingsPage() {
                 }
               >
                 <X size={18} />
-                રદ કરો
+                {t('રદ કરો', 'Cancel')}
               </button>
 
               <button
@@ -529,7 +532,7 @@ export function SettingsPage() {
                 onClick={() => submit()}
               >
                 <CheckCircle2 size={18} />
-                પુષ્ટિ કરો
+                {t('પુષ્ટિ કરો', 'Confirm')}
               </button>
             </div>
           </div>

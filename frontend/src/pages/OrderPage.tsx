@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { CreditCard, Plus, RefreshCw, ShoppingBag, Table2 } from 'lucide-react';
+import { Ban, CreditCard, Plus, RefreshCw, ShoppingBag, Table2 } from 'lucide-react';
+import { CancelOrderDialog } from '../components/CancelOrderDialog';
 import { OrderComposer } from '../components/OrderComposer';
 import { StatusBadge } from '../components/StatusBadge';
+import { useLanguage } from '../context/LanguageContext';
 import { api } from '../api/client';
 import { Order } from '../types';
 import { money, shortDate } from '../utils/format';
@@ -11,8 +13,10 @@ export function OrderPage() {
   const { tableId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [showComposer, setShowComposer] = useState(Boolean(tableId));
+  const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
   const existingOrderId = searchParams.get('orderId');
 
   async function load() {
@@ -29,12 +33,12 @@ export function OrderPage() {
       <div className="space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wider text-saffron">ચાલુ ઓર્ડર</p>
-            <h1 className="text-3xl font-black">ગ્રાહક માંગે ત્યારે બિલ બનાવો</h1>
+            <p className="text-sm font-bold uppercase tracking-wider text-saffron">{t('ચાલુ ઓર્ડર', 'Running orders')}</p>
+            <h1 className="text-3xl font-black">{t('ગ્રાહક માંગે ત્યારે બિલ બનાવો', 'Generate bill when customer asks')}</h1>
           </div>
           <div className="flex gap-2">
-            <button className="btn-soft" onClick={load}><RefreshCw size={17} /> રિફ્રેશ</button>
-            <button className="btn-primary" onClick={() => setShowComposer(true)}><Plus size={17} /> New parcel</button>
+            <button className="btn-soft" onClick={load}><RefreshCw size={17} /> {t('રિફ્રેશ', 'Refresh')}</button>
+            <button className="btn-primary" onClick={() => setShowComposer(true)}><Plus size={17} /> {t('નવો પાર્સલ', 'New parcel')}</button>
           </div>
         </div>
         <div className="grid items-start gap-4 md:grid-cols-2 2xl:grid-cols-3">
@@ -45,7 +49,7 @@ export function OrderPage() {
             >
               <div className="flex shrink-0 items-start justify-between gap-4 border-b border-gray-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
                 <div className="min-w-0">
-                  <p className="truncate text-xl font-black">{order.tableName || 'Parcel order'}</p>
+                  <p className="truncate text-xl font-black">{order.tableName || t('પાર્સલ ઓર્ડર', 'Parcel order')}</p>
                   <p className="truncate text-sm text-gray-500">{shortDate(order.createdAt)}</p>
                 </div>
                 <StatusBadge value={order.status} />
@@ -59,9 +63,7 @@ export function OrderPage() {
                       key={item._id || item.name}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <span className="min-w-0 font-semibold">
-                          {item.name}
-                        </span>
+                        <span className="min-w-0 font-semibold">{item.name}</span>
                         <span className="shrink-0 rounded-md bg-saffron/10 px-2 py-0.5 font-black text-saffron">
                           x{item.quantity}
                         </span>
@@ -76,22 +78,39 @@ export function OrderPage() {
 
               <div className="shrink-0 border-t border-gray-200 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
                 <div className="flex items-center justify-between rounded-lg bg-saffron/10 p-3">
-                  <span className="font-bold">ચાલુ કુલ</span>
+                  <span className="font-bold">{t('ચાલુ કુલ', 'Running total')}</span>
                   <span className="text-lg font-black text-saffron">{money(order.total)}</span>
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   {order.table ? (
-                    <button className="btn-soft min-w-0 px-2" onClick={() => navigate(`/orders/${order.table}?orderId=${order._id}`)}><Table2 size={17} /> <span className="truncate">વસ્તુઓ ઉમેરો</span></button>
+                    <button className="btn-soft min-w-0 px-2" onClick={() => navigate(`/orders/${order.table}?orderId=${order._id}`)}><Table2 size={17} /> <span className="truncate">{t('વસ્તુઓ ઉમેરો', 'Add items')}</span></button>
                   ) : (
-                    <button className="btn-soft min-w-0 px-2" onClick={() => setShowComposer(true)}><ShoppingBag size={17} /> <span className="truncate">નવો ઓર્ડર</span></button>
+                    <button className="btn-soft min-w-0 px-2" onClick={() => setShowComposer(true)}><ShoppingBag size={17} /> <span className="truncate">{t('નવો ઓર્ડર', 'New order')}</span></button>
                   )}
-                  <button className="btn-primary min-w-0 px-2" onClick={() => navigate(`/billing/${order._id}`)}><CreditCard size={17} /> <span className="truncate">બિલ</span></button>
+                  <button className="btn-primary min-w-0 px-2" onClick={() => navigate(`/billing/${order._id}`)}><CreditCard size={17} /> <span className="truncate">{t('બિલ', 'Bill')}</span></button>
+                  <button
+                    className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 font-bold text-red-700 hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+                    onClick={() => setOrderToCancel(order)}
+                  >
+                    <Ban size={17} /> {t('ઓર્ડર રદ કરો', 'Cancel order')}
+                  </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
+        {orderToCancel && (
+          <CancelOrderDialog
+            orderId={orderToCancel._id}
+            orderLabel={orderToCancel.tableName || t('પાર્સલ ઓર્ડર', 'Parcel order')}
+            onClose={() => setOrderToCancel(null)}
+            onCancelled={async () => {
+              setOrderToCancel(null);
+              await load();
+            }}
+          />
+        )}
       </div>
     );
   }
@@ -99,8 +118,14 @@ export function OrderPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-bold uppercase tracking-wider text-saffron">વેઇટર મોડ</p>
-        <h1 className="text-3xl font-black">{tableId ? (existingOrderId ? 'ટેબલમાં વસ્તુઓ ઉમેરો' : 'ટેબલ ઓર્ડર') : 'Parcel order'}</h1>
+        <p className="text-sm font-bold uppercase tracking-wider text-saffron">{t('વેઇટર મોડ', 'Waiter mode')}</p>
+        <h1 className="text-3xl font-black">
+          {tableId
+            ? existingOrderId
+              ? t('ટેબલમાં વસ્તુઓ ઉમેરો', 'Add items to table')
+              : t('ટેબલ ઓર્ડર', 'Dine-in order')
+            : t('પાર્સલ ઓર્ડર', 'Parcel order')}
+        </h1>
       </div>
       <OrderComposer tableId={tableId} existingOrderId={existingOrderId} defaultType={tableId ? 'dine-in' : 'takeaway'} />
     </div>

@@ -12,6 +12,14 @@ function formatINR(value) {
   return `Rs. ${Number(value || 0).toFixed(2)}`;
 }
 
+function formatBillDate(value) {
+  return new Intl.DateTimeFormat('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'medium',
+    timeZone: 'Asia/Kolkata'
+  }).format(new Date(value));
+}
+
 async function nextBillNumber(restaurant) {
   const count = await Invoice.countDocuments({ restaurant: restaurant._id });
   const date = new Date().toISOString().slice(0, 10).replaceAll('-', '');
@@ -41,7 +49,7 @@ export async function buildInvoicePdfBuffer(invoice, order, restaurant) {
     doc.y = 136;
     doc.fontSize(10).font('Helvetica-Bold').text('Bill details', left, doc.y);
     doc.font('Helvetica').fontSize(9);
-    doc.text(`Date: ${invoice.createdAt.toLocaleString()}`, left, doc.y + 8);
+    doc.text(`Date: ${formatBillDate(invoice.createdAt)}`, left, doc.y + 8);
     doc.text(`Order: ${orderType}${order.tableName ? ` / ${order.tableName}` : ''}`, left, doc.y + 22);
     doc.text(`Payment: ${invoice.paymentMode || 'cash'}`, left, doc.y + 36);
     doc.font('Helvetica-Bold').text('Customer', 350, 136);
@@ -71,9 +79,10 @@ export async function buildInvoicePdfBuffer(invoice, order, restaurant) {
     doc.moveDown();
     const totals = [
       ['Subtotal', invoice.subtotal],
-      ['Discount', -invoice.discount],
-      ['Parcel Charge', invoice.takeawayCharge ?? invoice.parcelCharge],
+      ...(invoice.discount > 0 ? [[`Discount${invoice.discountReason ? ` (${invoice.discountReason})` : ''}`, -invoice.discount]] : []),
+      ...(Number(invoice.takeawayCharge ?? invoice.parcelCharge) > 0 ? [['Parcel Charge', invoice.takeawayCharge ?? invoice.parcelCharge]] : []),
       ...(invoice.gstEnabled ? [[`GST (${invoice.gstRate}%)`, invoice.gst]] : []),
+      ...(invoice.roundOff ? [['Round Off', invoice.roundOff]] : []),
       ['Grand Total', invoice.total]
     ];
     totals.forEach(([label, value], index) => {
@@ -90,9 +99,14 @@ export async function buildInvoicePdfBuffer(invoice, order, restaurant) {
   });
 }
 
-export async function createInvoiceForOrder(orderId, { sendWhatsApp = true, paymentMode = 'cash', payments = [] } = {}) {
+export async function createInvoiceForOrder(orderId, { sendWhatsApp = true, paymentMode = 'cash', payments = [], customerMobile } = {}) {
   const order = await Order.findById(orderId);
   if (!order) throw new Error('Order not found');
+  if (customerMobile?.trim()) {
+    order.customerMobile = customerMobile.trim();
+    await order.save();
+  }
+  if (!order.customerMobile?.trim()) throw new Error('Customer mobile is required to finalize the bill');
   const restaurant = await Restaurant.findById(order.restaurant);
   const billNumber = await nextBillNumber(restaurant);
   const invoice = await Invoice.create({
@@ -105,11 +119,14 @@ export async function createInvoiceForOrder(orderId, { sendWhatsApp = true, paym
     discountType: order.discountType,
     discountValue: order.discountValue,
     discount: order.discount,
+    discountReason: order.discountReason,
     takeawayCharge: order.takeawayCharge,
     parcelCharge: order.parcelCharge,
     gstEnabled: order.gstEnabled,
     gstRate: order.gstRate,
     gst: order.gst,
+    exactTotal: order.exactTotal,
+    roundOff: order.roundOff,
     total: order.total,
     paymentMode,
     payments,

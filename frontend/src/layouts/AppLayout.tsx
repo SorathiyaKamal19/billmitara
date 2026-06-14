@@ -62,7 +62,7 @@ export function AppLayout() {
               </div>
               <div>
                 <p className="text-xl font-black tracking-tight">POSS</p>
-                <p className="text-xs text-white/70">સ્માર્ટ રેસ્ટોરન્ટ POS</p>
+                <p className="text-xs text-white/70">{t('સ્માર્ટ રેસ્ટોરન્ટ POS', 'Smart Restaurant POS')}</p>
               </div>
             </NavLink>
           </div>
@@ -90,8 +90,22 @@ export function AppLayout() {
             </NavLink>
             <div className="flex gap-2">
               <LanguageSelector />
-              <button className="btn-soft flex-1" onClick={toggleTheme}>{dark ? <Sun size={17} /> : <Moon size={17} />}</button>
-              <button className="btn-soft flex-1" onClick={handleLogout}><LogOut size={17} /></button>
+              <button
+                className="btn-soft flex-1"
+                onClick={toggleTheme}
+                title={dark ? t('લાઇટ મોડ', 'Light mode') : t('ડાર્ક મોડ', 'Dark mode')}
+                aria-label={dark ? t('લાઇટ મોડ', 'Light mode') : t('ડાર્ક મોડ', 'Dark mode')}
+              >
+                {dark ? <Sun size={17} /> : <Moon size={17} />}
+              </button>
+              <button
+                className="btn-soft flex-1"
+                onClick={handleLogout}
+                title={t('લૉગ આઉટ', 'Logout')}
+                aria-label={t('લૉગ આઉટ', 'Logout')}
+              >
+                <LogOut size={17} />
+              </button>
             </div>
           </div>
         </div>
@@ -144,13 +158,21 @@ export function AppLayout() {
                 )}
                 <div className="mt-2 space-y-2 border-t border-gray-200 pt-2 dark:border-white/10">
                   <LanguageSelector />
-                  <button className="btn-soft w-full justify-start" onClick={toggleTheme}>
+                  <button
+                    className="btn-soft w-full justify-start"
+                    onClick={toggleTheme}
+                    title={dark ? t('લાઇટ મોડ', 'Light mode') : t('ડાર્ક મોડ', 'Dark mode')}
+                  >
                     {dark ? <Sun size={17} /> : <Moon size={17} />}
-                    {dark ? 'Light mode' : 'Night mode'}
+                    {dark ? t('લાઇટ મોડ', 'Light mode') : t('ડાર્ક મોડ', 'Dark mode')}
                   </button>
-                  <button className="btn-soft w-full justify-start text-red-600 dark:text-red-300" onClick={handleLogout}>
+                  <button
+                    className="btn-soft w-full justify-start text-red-600 dark:text-red-300"
+                    onClick={handleLogout}
+                    title={t('લૉગ આઉટ', 'Logout')}
+                  >
                     <LogOut size={17} />
-                    Logout
+                    {t('લૉગ આઉટ', 'Logout')}
                   </button>
                 </div>
               </div>

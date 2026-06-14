@@ -71,13 +71,19 @@ export interface Order {
   discountType: 'fixed' | 'percentage';
   discountValue: number;
   discount: number;
+  discountReason?: string;
   takeawayCharge: number;
   parcelCharge: number;
   gstEnabled: boolean;
   gstRate: number;
   gst: number;
+  exactTotal?: number;
+  roundOff?: number;
   total: number;
   notes?: string;
+  cancellationReason?: string;
+  cancelledAt?: string;
+  cancelledBy?: string;
   createdAt: string;
 }
 

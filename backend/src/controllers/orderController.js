@@ -17,6 +17,8 @@ const orderSchema = z.object({
   discountType: z.enum(['fixed', 'percentage']).default('fixed'),
   discountValue: z.number().nonnegative().default(0),
   discount: z.number().nonnegative().optional(),
+  discountReason: z.string().optional(),
+  customerMobile: z.string().optional(),
   takeawayCharge: z.number().nonnegative().optional(),
   parcelCharge: z.number().nonnegative().optional(),
   items: z.array(z.object({ menuItem: z.string(), quantity: z.number().int().positive(), note: z.string().optional() })).min(1)
@@ -84,7 +86,8 @@ export const createOrder = asyncHandler(async (req, res) => {
   assertDiscountAllowed(req, input.discountValue ?? input.discount);
   const restaurant = await Restaurant.findById(req.user.restaurant);
   const items = await hydrateItems(input.items, req.user.restaurant);
-  const takeawayCharge = input.type === 'takeaway' && restaurant.takeawayChargeEnabled ? input.takeawayCharge ?? restaurant.takeawayCharge : 0;
+  const defaultCharge = restaurant.parcelCharge || restaurant.takeawayCharge;
+  const takeawayCharge = input.type === 'takeaway' && restaurant.takeawayChargeEnabled ? input.takeawayCharge ?? defaultCharge : 0;
   const totals = calculateOrderTotals(items, {
     discountType: input.discountType,
     discountValue: input.discountValue ?? input.discount ?? 0,
@@ -107,6 +110,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     customerName: input.customerName,
     customerMobile: input.customerMobile?.trim(),
     notes: input.notes,
+    discountReason: input.discountReason?.trim(),
     createdBy: req.user._id,
     items,
     ...totals,
@@ -119,8 +123,31 @@ export const createOrder = asyncHandler(async (req, res) => {
 });
 
 export const updateOrderStatus = asyncHandler(async (req, res) => {
-  const { status } = z.object({ status: z.enum(['running', 'in-kitchen', 'ready', 'billed', 'cancelled']) }).parse(req.body);
-  const order = await Order.findOneAndUpdate({ _id: req.params.id, restaurant: req.user.restaurant }, { status }, { new: true });
+  const { status, reason } = z.object({
+    status: z.enum(['running', 'in-kitchen', 'ready', 'billed', 'cancelled']),
+    reason: z.string().trim().optional()
+  }).parse(req.body);
+  const order = await Order.findOne({ _id: req.params.id, restaurant: req.user.restaurant });
+  if (!order) throw new ApiError(404, 'Order not found');
+  if (order.status === 'billed') throw new ApiError(400, 'Billed orders cannot be cancelled');
+  if (order.status === 'cancelled') throw new ApiError(400, 'Order is already cancelled');
+
+  if (status === 'cancelled') {
+    if (!reason) throw new ApiError(400, 'Cancellation reason is required');
+    order.cancellationReason = reason;
+    order.cancelledAt = new Date();
+    order.cancelledBy = req.user._id;
+    if (order.table) {
+      await Table.findOneAndUpdate(
+        { _id: order.table, restaurant: req.user.restaurant, currentOrder: order._id },
+        { status: 'available', $unset: { currentOrder: 1 } }
+      );
+    }
+  }
+
+  order.status = status;
+  await order.save();
+  emitKitchen(String(req.user.restaurant), 'order:updated', order);
   emitRestaurant(String(req.user.restaurant), 'order:updated', order);
   res.json(order);
 });
@@ -130,7 +157,8 @@ export const addItemsToOrder = asyncHandler(async (req, res) => {
     items: orderSchema.shape.items,
     discountType: z.enum(['fixed', 'percentage']).optional(),
     discountValue: z.number().nonnegative().optional(),
-    discount: z.number().nonnegative().optional()
+    discount: z.number().nonnegative().optional(),
+    discountReason: z.string().optional()
   }).parse(req.body);
   assertDiscountAllowed(req, input.discountValue ?? input.discount);
   const order = await Order.findOne({ _id: req.params.id, restaurant: req.user.restaurant });
@@ -145,6 +173,7 @@ export const addItemsToOrder = asyncHandler(async (req, res) => {
     gstRate: order.gstRate
   });
   Object.assign(order, totals, { status: 'in-kitchen' });
+  if (input.discountReason !== undefined) order.discountReason = input.discountReason?.trim();
   await order.save();
   emitKitchen(String(req.user.restaurant), 'order:updated', order);
   emitRestaurant(String(req.user.restaurant), 'order:updated', order);
@@ -155,7 +184,9 @@ export const updateOrder = asyncHandler(async (req, res) => {
   const input = z.object({
     items: z.array(editableOrderItemSchema).min(1),
     discountType: z.enum(['fixed', 'percentage']).optional(),
-    discountValue: z.number().nonnegative().optional()
+    discountValue: z.number().nonnegative().optional(),
+    discountReason: z.string().optional(),
+    customerMobile: z.string().optional()
   }).parse(req.body);
   assertDiscountAllowed(req, input.discountValue);
   const order = await Order.findOne({ _id: req.params.id, restaurant: req.user.restaurant });
@@ -179,6 +210,8 @@ export const updateOrder = asyncHandler(async (req, res) => {
     gstRate: order.gstRate
   });
   Object.assign(order, totals);
+  if (input.discountReason !== undefined) order.discountReason = input.discountReason?.trim();
+  if (input.customerMobile !== undefined) order.customerMobile = input.customerMobile.trim();
   await order.save();
   emitKitchen(String(req.user.restaurant), 'order:updated', order);
   emitRestaurant(String(req.user.restaurant), 'order:updated', order);

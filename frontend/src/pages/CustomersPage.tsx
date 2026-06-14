@@ -11,10 +11,12 @@ import {
 } from 'lucide-react';
 
 import { api } from '../api/client';
+import { useLanguage } from '../context/LanguageContext';
 import { Customer } from '../types';
 import { money } from '../utils/format';
 
 export function CustomersPage() {
+  const { t } = useLanguage();
   const [customers, setCustomers] = useState<
     Customer[]
   >([]);
@@ -88,11 +90,14 @@ export function CustomersPage() {
             </div>
 
             <h1 className="text-4xl font-black">
-              ગ્રાહક મેનેજમેન્ટ
+              {t('ગ્રાહક મેનેજમેન્ટ', 'Customer Management')}
             </h1>
 
             <p className="mt-3 max-w-2xl text-white/90">
-              ગ્રાહક મુલાકાતો, ખર્ચની રીતો અને રેસ્ટોરન્ટ સંબંધો ટ્રેક કરો.
+              {t(
+                'ગ્રાહક મુલાકાતો, ખર્ચની રીતો અને રેસ્ટોરન્ટ સંબંધો ટ્રેક કરો.',
+                'Track customer visits, spending patterns and restaurant relationships.'
+              )}
             </p>
           </div>
 
@@ -100,12 +105,12 @@ export function CustomersPage() {
 
           <div className="rounded-3xl border border-white/20 bg-white/10 p-5 backdrop-blur-xl">
             <p className="text-xs font-bold uppercase tracking-widest text-white/70">
-              ટોચનો ગ્રાહક
+              {t('ટોચનો ગ્રાહક', 'Top Customer')}
             </p>
 
             <h2 className="mt-2 text-2xl font-black">
               {stats.topCustomer?.name ||
-                'મહેમાન'}
+                t('મહેમાન', 'Guest')}
             </h2>
 
             <p className="mt-1 text-sm text-white/80">
@@ -113,7 +118,7 @@ export function CustomersPage() {
                 stats.topCustomer
                   ?.totalSpending || 0
               )}{' '}
-              ખર્ચ્યા
+              {t('ખર્ચ્યા', 'spent')}
             </p>
           </div>
         </div>
@@ -128,7 +133,7 @@ export function CustomersPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-gray-500">
-                કુલ ગ્રાહકો
+                {t('કુલ ગ્રાહકો', 'Total Customers')}
               </p>
 
               <h2 className="mt-2 text-3xl font-black">
@@ -148,7 +153,7 @@ export function CustomersPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-gray-500">
-                ગ્રાહક આવક
+                {t('ગ્રાહક આવક', 'Customer Revenue')}
               </p>
 
               <h2 className="mt-2 text-3xl font-black">
@@ -170,7 +175,7 @@ export function CustomersPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-gray-500">
-                કુલ મુલાકાતો
+                {t('કુલ મુલાકાતો', 'Total Visits')}
               </p>
 
               <h2 className="mt-2 text-3xl font-black">
@@ -190,7 +195,7 @@ export function CustomersPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-gray-500">
-                સરેરાશ ખર્ચ
+                {t('સરેરાશ ખર્ચ', 'Avg Spending')}
               </p>
 
               <h2 className="mt-2 text-3xl font-black">
@@ -221,7 +226,10 @@ export function CustomersPage() {
 
           <input
             className="input h-14 rounded-2xl pl-12 text-base"
-            placeholder="ગ્રાહકનું નામ અથવા મોબાઇલ નંબર શોધો..."
+            placeholder={t(
+              'ગ્રાહકનું નામ અથવા મોબાઇલ નંબર શોધો...',
+              'Search customer name or mobile number...'
+            )}
             value={q}
             onChange={(e) =>
               setQ(e.target.value)
@@ -253,7 +261,7 @@ export function CustomersPage() {
                 <div>
                   <h2 className="text-xl font-black">
                     {customer.name ||
-                      'મહેમાન ગ્રાહક'}
+                      t('મહેમાન ગ્રાહક', 'Guest Customer')}
                   </h2>
 
                   <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
@@ -270,7 +278,7 @@ export function CustomersPage() {
 
               <div className="rounded-full bg-saffron/10 px-3 py-1 text-xs font-bold text-saffron">
                 {customer.totalVisits}{' '}
-                મુલાકાતો
+                {t('મુલાકાતો', 'Visits')}
               </div>
             </div>
 
@@ -281,7 +289,7 @@ export function CustomersPage() {
 
               <div className="rounded-2xl bg-emerald-50 p-4 dark:bg-emerald-500/10">
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  કુલ ખર્ચ
+                  {t('કુલ ખર્ચ', 'Total Spending')}
                 </p>
 
                 <h3 className="mt-2 text-2xl font-black text-emerald-700 dark:text-emerald-400">
@@ -295,7 +303,7 @@ export function CustomersPage() {
 
               <div className="rounded-2xl bg-saffron/10 p-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  સરેરાશ બિલ
+                  {t('સરેરાશ બિલ', 'Avg Bill')}
                 </p>
 
                 <h3 className="mt-2 text-2xl font-black text-saffron">
@@ -314,15 +322,15 @@ export function CustomersPage() {
             <div className="mt-5 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-white/10">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  લોયલ્ટી સ્થિતિ
+                  {t('લોયલ્ટી સ્થિતિ', 'Loyalty Status')}
                 </p>
 
                 <p className="mt-1 font-black text-saffron">
                   {customer.totalVisits >= 10
-                    ? 'VIP ગ્રાહક'
+                    ? t('VIP ગ્રાહક', 'VIP Customer')
                     : customer.totalVisits >= 5
-                    ? 'નિયમિત ગ્રાહક'
-                    : 'નવો ગ્રાહક'}
+                    ? t('નિયમિત ગ્રાહક', 'Regular Customer')
+                    : t('નવો ગ્રાહક', 'New Customer')}
                 </p>
               </div>
 
@@ -345,11 +353,14 @@ export function CustomersPage() {
             </div>
 
             <h2 className="mt-5 text-2xl font-black">
-              કોઈ ગ્રાહક મળ્યા નથી
+              {t('કોઈ ગ્રાહક મળ્યા નથી', 'No Customers Found')}
             </h2>
 
             <p className="mt-2 text-gray-500">
-              ઓર્ડર થયા પછી ગ્રાહક રેકોર્ડ અહીં દેખાશે.
+              {t(
+                'ઓર્ડર થયા પછી ગ્રાહક રેકોર્ડ અહીં દેખાશે.',
+                'Customer records will appear here once orders are placed.'
+              )}
             </p>
           </div>
         )}
