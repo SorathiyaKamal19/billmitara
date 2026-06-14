@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MenuItem } from '../models/MenuItem.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiError } from '../utils/apiError.js';
 
 const menuSchema = z.object({
   name: z.string().min(2),
@@ -44,12 +45,41 @@ export const mostSellingMenu = asyncHandler(async (req, res) => {
 
 export const createMenuItem = asyncHandler(async (req, res) => {
   const input = menuSchema.parse(req.body);
+  const duplicateQuery = {
+    restaurant: req.user.restaurant,
+    name: new RegExp(`^${input.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+  };
+  if (input.code?.trim()) {
+    const codeDuplicate = await MenuItem.findOne({
+      restaurant: req.user.restaurant,
+      code: new RegExp(`^${input.code.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+    });
+    if (codeDuplicate) throw new ApiError(409, 'An item with this code already exists');
+  }
+  const duplicate = await MenuItem.findOne(duplicateQuery);
+  if (duplicate) throw new ApiError(409, 'An item with this name already exists');
   const item = await MenuItem.create({ ...input, restaurant: req.user.restaurant });
   res.status(201).json(item);
 });
 
 export const updateMenuItem = asyncHandler(async (req, res) => {
   const input = menuSchema.partial().parse(req.body);
+  if (input.name) {
+    const duplicate = await MenuItem.findOne({
+      _id: { $ne: req.params.id },
+      restaurant: req.user.restaurant,
+      name: new RegExp(`^${input.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+    });
+    if (duplicate) throw new ApiError(409, 'An item with this name already exists');
+  }
+  if (input.code?.trim()) {
+    const codeDuplicate = await MenuItem.findOne({
+      _id: { $ne: req.params.id },
+      restaurant: req.user.restaurant,
+      code: new RegExp(`^${input.code.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+    });
+    if (codeDuplicate) throw new ApiError(409, 'An item with this code already exists');
+  }
   const item = await MenuItem.findOneAndUpdate({ _id: req.params.id, restaurant: req.user.restaurant }, input, { new: true });
   res.json(item);
 });

@@ -4,9 +4,12 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { MenuItem } from '../types';
-import { money } from '../utils/format';
+import { calcClientTotals, money } from '../utils/format';
 import { foodTypeLabel, statusLabel } from '../utils/gujarati';
+import { DiscountFields } from './DiscountFields';
+import { BillTotals } from './BillTotals';
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -26,6 +29,7 @@ export function OrderComposer({
 }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const canDiscount = user?.role === 'owner';
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [query, setQuery] = useState('');
@@ -36,6 +40,7 @@ export function OrderComposer({
   const [type, setType] = useState(defaultType);
   const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('fixed');
   const [discountValue, setDiscountValue] = useState(0);
+  const [discountReason, setDiscountReason] = useState('');
   const [notes, setNotes] = useState('');
   const [takeawayCharge, setTakeawayCharge] = useState(0);
   const [gstEnabled, setGstEnabled] = useState(true);
@@ -45,7 +50,8 @@ export function OrderComposer({
   useEffect(() => {
     api.get('/menu').then((res) => setMenu(res.data.filter((item: MenuItem) => item.isAvailable)));
     api.get('/settings').then((res) => {
-      setTakeawayCharge(res.data.takeawayChargeEnabled ? res.data.takeawayCharge : 0);
+      const charge = res.data.parcelCharge ?? res.data.takeawayCharge ?? 0;
+      setTakeawayCharge(res.data.takeawayChargeEnabled ? charge : 0);
       setGstEnabled(Boolean(res.data.gstEnabled));
       setGstRate(Number(res.data.gstRate || 0));
     });
@@ -67,8 +73,7 @@ export function OrderComposer({
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const charge = type === 'dine-in' ? 0 : takeawayCharge;
   const discount = discountType === 'percentage' ? Math.min(subtotal * discountValue / 100, subtotal) : Math.min(discountValue, subtotal);
-  const gst = gstEnabled ? Math.max(subtotal + charge - discount, 0) * (gstRate / 100) : 0;
-  const total = Math.max(subtotal + charge - discount, 0) + gst;
+  const totals = calcClientTotals({ subtotal, charge, discount, gstEnabled, gstRate });
 
   function add(item: MenuItem) {
     setCart((current) => {
@@ -88,8 +93,8 @@ export function OrderComposer({
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!cart.length) return toast.error('ઓછામાં ઓછી એક વસ્તુ ઉમેરો');
-    if (!customerName.trim()) return toast.error('Customer name is required');
+    if (!cart.length) return toast.error(t('ઓછામાં ઓછી એક વસ્તુ ઉમેરો', 'Add at least one item'));
+    if (!customerName.trim()) return toast.error(t('ગ્રાહકનું નામ જરૂરી છે', 'Customer name is required'));
     const payload = {
       table: type === 'dine-in' ? tableId : undefined,
       type,
@@ -98,15 +103,21 @@ export function OrderComposer({
       notes,
       discountType: canDiscount ? discountType : 'fixed',
       discountValue: canDiscount ? discountValue : 0,
+      discountReason: canDiscount && discountValue > 0 ? discountReason.trim() : undefined,
       items: cart.map((item) => ({ menuItem: item._id, quantity: item.quantity, note: item.note })),
       takeawayCharge: charge
     };
     if (existingOrderId) {
-      await api.post(`/orders/${existingOrderId}/items`, { items: payload.items, discountType: payload.discountType, discountValue: payload.discountValue });
-      toast.success('વધુ વસ્તુઓ રસોડામાં મોકલાઈ');
+      await api.post(`/orders/${existingOrderId}/items`, {
+        items: payload.items,
+        discountType: payload.discountType,
+        discountValue: payload.discountValue,
+        discountReason: payload.discountReason
+      });
+      toast.success(t('વધુ વસ્તુઓ રસોડામાં મોકલાઈ', 'More items sent to kitchen'));
     } else {
       await api.post('/orders', payload);
-      toast.success('ઓર્ડર રસોડામાં મોકલાયો');
+      toast.success(t('ઓર્ડર રસોડામાં મોકલાયો', 'Order sent to kitchen'));
     }
     navigate(type === 'dine-in' ? '/tables' : '/orders');
   }
@@ -121,14 +132,13 @@ export function OrderComposer({
               <input className="input pl-10" placeholder="Search item name or item code" value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
             <div className="grid max-h-40 gap-2 overflow-y-auto pr-1 sm:flex sm:max-h-none sm:max-w-full sm:overflow-x-auto sm:overflow-y-hidden sm:pb-1 sm:pr-0">
-              {categories.map((cat) => <button type="button" key={cat} onClick={() => setCategory(cat)} className={`w-full justify-start sm:w-auto sm:shrink-0 ${cat === category ? 'btn-primary' : 'btn-soft'}`}>{cat === 'Most Selling' && <Star size={15} />} <span className="truncate">{cat === 'All' ? 'બધા' : cat === 'Most Selling' ? 'સૌથી વધુ વેચાતા' : cat}</span></button>)}
+              {categories.map((cat) => <button type="button" key={cat} onClick={() => setCategory(cat)} className={`w-full justify-start sm:w-auto sm:shrink-0 ${cat === category ? 'btn-primary' : 'btn-soft'}`}>{cat === 'Most Selling' && <Star size={15} />} <span className="truncate">{cat === 'All' ? t('બધા', 'All') : cat === 'Most Selling' ? t('સૌથી વધુ વેચાતા', 'Most Selling') : cat}</span></button>)}
             </div>
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((item) => (
             <button type="button" key={item._id} onClick={() => add(item)} className="glass overflow-hidden rounded-lg text-left transition hover:-translate-y-1">
-         
               <div className="p-3 sm:p-4">
                 <div className="flex items-start justify-between gap-3"><p className="min-w-0 font-black">{item.name}</p><span className="shrink-0 text-sm font-black text-saffron">{money(item.price)}</span></div>
                 <p className="mt-1 text-xs text-gray-500">{item.code ? `${item.code} - ` : ''}{item.category} - {foodTypeLabel(item.foodType)}</p>
@@ -138,22 +148,22 @@ export function OrderComposer({
         </div>
       </section>
       <aside className={`glass h-fit rounded-lg p-4 sm:p-5 xl:sticky xl:top-6 ${mobileSummaryFirst ? 'order-first xl:order-none' : ''}`}>
-        <div className="flex items-center justify-between"><h2 className="text-xl font-black">હાલનો ઓર્ડર</h2><Send className="text-saffron" /></div>
+        <div className="flex items-center justify-between"><h2 className="text-xl font-black">{t('હાલનો ઓર્ડર', 'Current order')}</h2><Send className="text-saffron" /></div>
         <div className="mt-4 grid grid-cols-2 gap-2">
           {(['dine-in', 'takeaway'] as const).map((value) => (
             <button key={value} type="button" onClick={() => setType(value)} className={type === value ? 'btn-primary px-2' : 'btn-soft px-2'}>{statusLabel(value)}</button>
           ))}
         </div>
         <div className="mt-4 grid gap-3">
-          <input className="input" placeholder="Customer name *" required value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
-          <input className="input" placeholder="Mobile for WhatsApp bill (optional)" value={customerMobile} onChange={(e) => setCustomerMobile(e.target.value)} />
-          <textarea className="input min-h-20" placeholder="રસોડા માટે નોંધ" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <input className="input" placeholder={t('ગ્રાહકનું નામ', 'Customer name') + ' *'} required value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+          <input className="input" placeholder={t('WhatsApp બિલ માટે મોબાઇલ', 'Mobile for WhatsApp bill')} value={customerMobile} onChange={(e) => setCustomerMobile(e.target.value)} />
+          <textarea className="input min-h-20" placeholder={t('રસોડા માટે નોંધ', 'Kitchen notes')} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
         <div className="mt-5 max-h-80 space-y-3 overflow-y-auto pr-1 sm:max-h-[45vh] xl:max-h-80">
           {cart.map((item) => (
             <div key={item._id} className="rounded-lg bg-white/80 p-3 dark:bg-white/10">
               <div className="flex items-start justify-between gap-2">
-                <div><p className="font-bold">{item.name}</p><p className="text-xs text-gray-500">{money(item.price)} પ્રતિ વસ્તુ</p></div>
+                <div><p className="font-bold">{item.name}</p><p className="text-xs text-gray-500">{money(item.price)} {t('પ્રતિ વસ્તુ', 'each')}</p></div>
                 <button type="button" onClick={() => setCart((rows) => rows.filter((row) => row._id !== item._id))}><Trash2 size={17} className="text-red-500" /></button>
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -167,25 +177,35 @@ export function OrderComposer({
             </div>
           ))}
         </div>
-        <div className="mt-5 space-y-2 border-t border-gray-200 pt-4 text-sm dark:border-white/10">
-          <div className="flex justify-between"><span>સબટોટલ</span><b>{money(subtotal)}</b></div>
-          {canDiscount && (
-            <div className="flex items-center justify-between gap-3">
-              <span>Discount</span>
-              <select className="input h-9 w-24" value={discountType} onChange={(e) => setDiscountType(e.target.value as 'fixed' | 'percentage')}>
-                <option value="fixed">Rs.</option>
-                <option value="percentage">%</option>
-              </select>
-              <input className="input h-9 w-24" type="number" min={0} value={discountValue} onChange={(e) => setDiscountValue(Number(e.target.value))} />
-            </div>
-          )}
-          {type === 'takeaway' && <div className="flex justify-between"><span>Parcel charge</span><b>{money(charge)}</b></div>}
-          {gstEnabled && <div className="flex justify-between"><span>GST {gstRate}%</span><b>{money(gst)}</b></div>}
-          <div className="flex justify-between text-lg"><span className="font-black">કુલ</span><b>{money(total)}</b></div>
-        </div>
+        {canDiscount && (
+          <div className="mt-5">
+            <DiscountFields
+              compact
+              discountType={discountType}
+              discountValue={discountValue}
+              discountReason={discountReason}
+              onTypeChange={setDiscountType}
+              onValueChange={setDiscountValue}
+              onReasonChange={setDiscountReason}
+            />
+          </div>
+        )}
+        <BillTotals
+          className="mt-5 border-t border-gray-200 pt-4 dark:border-white/10"
+          subtotal={subtotal}
+          discount={discount}
+          discountReason={discountReason}
+          takeawayCharge={charge}
+          gstEnabled={gstEnabled}
+          gstRate={gstRate}
+          gst={totals.gst}
+          roundOff={totals.roundOff}
+          total={totals.total}
+          totalLabel={t('કુલ', 'Total')}
+        />
         <button className="btn-primary mt-5 w-full">
           <Send size={18} />
-          {existingOrderId ? 'વસ્તુઓ રસોડામાં ઉમેરો' : 'રસોડામાં મોકલો'}
+          {existingOrderId ? t('વસ્તુઓ રસોડામાં ઉમેરો', 'Add Items to Kitchen') : t('રસોડામાં મોકલો', 'Send to Kitchen')}
         </button>
       </aside>
     </form>

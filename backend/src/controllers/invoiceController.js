@@ -8,18 +8,25 @@ import { calculateOrderTotals } from '../utils/tax.js';
 
 export const createInvoice = asyncHandler(async (req, res) => {
   const order = await Order.findOne({ _id: req.params.orderId, restaurant: req.user.restaurant });
-  const payments = req.body.payments?.length ? req.body.payments : [{ method: req.body.paymentMode || 'cash', amount: order?.total || 0 }];
+  if (!order) return res.status(404).json({ message: 'Order not found' });
+  const mobile = (req.body.customerMobile || order.customerMobile || '').trim();
+  if (!mobile) return res.status(400).json({ message: 'Customer mobile is required to finalize the bill' });
+  const payments = req.body.payments?.length ? req.body.payments : [{ method: req.body.paymentMode || 'cash', amount: order.total || 0 }];
   if (payments.some((payment) => payment.method === 'card')) return res.status(400).json({ message: 'Card payment is not available' });
   const paid = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
-  if (!order) return res.status(404).json({ message: 'Order not found' });
   if (Math.abs(paid - order.total) > 0.5) return res.status(400).json({ message: 'Payment amount must match bill total' });
   const paymentMode = payments.length > 1 ? 'partial' : payments[0].method;
-  const invoice = await createInvoiceForOrder(req.params.orderId, {
-    sendWhatsApp: req.body.sendWhatsApp !== false && Boolean(order.customerMobile),
-    paymentMode,
-    payments
-  });
-  res.status(201).json(invoice);
+  try {
+    const invoice = await createInvoiceForOrder(req.params.orderId, {
+      sendWhatsApp: req.body.sendWhatsApp !== false && Boolean(mobile),
+      paymentMode,
+      payments,
+      customerMobile: mobile
+    });
+    res.status(201).json(invoice);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 });
 
 export const getInvoicePdf = asyncHandler(async (req, res) => {

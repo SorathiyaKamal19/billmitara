@@ -2,17 +2,20 @@ import { FormEvent, useEffect, useState } from "react";
 import { Plus, Save, Trash2, Pencil, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { api } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 import { MenuItem } from "../types";
 import { money } from "../utils/format";
 import { foodTypeLabel } from "../utils/gujarati";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 
 export function MenuPage() {
+  const { t } = useLanguage();
   const [items, setItems] = useState<MenuItem[]>([]);
 
   const defaultForm = {
     name: "",
     code: "",
-    category: "Pizza",
+    category: "",
     price: 0,
     foodType: "veg" as const,
     imageUrl: "",
@@ -35,13 +38,14 @@ export function MenuPage() {
   async function submit(event: FormEvent) {
     event.preventDefault();
 
-    await api.post("/menu", form);
-
-    setForm(defaultForm);
-
-    toast.success("મેનુ વસ્તુ ઉમેરાઈ");
-
-    load();
+    try {
+      await api.post("/menu", form);
+      setForm(defaultForm);
+      toast.success(t("મેનુ વસ્તુ ઉમેરાઈ", "Menu item added"));
+      load();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || t("મેનુ વસ્તુ ઉમેરી શકાઈ નહીં", "Could not add menu item"));
+    }
   }
 
   async function toggle(item: MenuItem) {
@@ -55,7 +59,7 @@ export function MenuPage() {
   async function remove(id: string) {
     await api.delete(`/menu/${id}`);
 
-    toast.success("વસ્તુ કાઢી નાખી");
+    toast.success(t("વસ્તુ કાઢી નાખી", "Item removed"));
 
     load();
   }
@@ -68,13 +72,14 @@ export function MenuPage() {
   async function updateItem() {
     if (!editItem) return;
 
-    await api.patch(`/menu/${editItem._id}`, editItem);
-
-    toast.success("મેનુ અપડેટ થયું");
-
-    setEditModal(false);
-
-    load();
+    try {
+      await api.patch(`/menu/${editItem._id}`, editItem);
+      toast.success(t("મેનુ અપડેટ થયું", "Menu updated"));
+      setEditModal(false);
+      load();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || t("મેનુ અપડેટ થઈ શક્યું નહીં", "Could not update menu"));
+    }
   }
 
   return (
@@ -83,20 +88,20 @@ export function MenuPage() {
       <div className="flex flex-col gap-4 rounded-2xl border border-white/70 bg-white/80 p-5 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/75 md:flex-row md:items-center md:justify-between">
         <div>
           <span className="inline-flex items-center rounded-full bg-saffron/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-saffron">
-            મેનુ મેનેજમેન્ટ
+            {t("મેનુ મેનેજમેન્ટ", "Menu Management")}
           </span>
 
           <h1 className="mt-3 text-3xl font-black tracking-tight text-gray-950 dark:text-white sm:text-4xl">
-            રેસ્ટોરન્ટ મેનુ
+            {t("રેસ્ટોરન્ટ મેનુ", "Restaurant Menu")}
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500 dark:text-gray-400">
-            ખાદ્ય વસ્તુઓ બનાવો, અપડેટ કરો અને મેનેજ કરો.
+            {t("ખાદ્ય વસ્તુઓ બનાવો, અપડેટ કરો અને મેનેજ કરો.", "Create, update and manage your food items.")}
           </p>
         </div>
 
         <div className="rounded-xl border border-saffron/15 bg-saffron/5 px-5 py-3">
-          <p className="text-xs text-gray-500">કુલ વસ્તુઓ</p>
+          <p className="text-xs text-gray-500">{t("કુલ વસ્તુઓ", "Total Items")}</p>
           <p className="mt-1 text-3xl font-black text-saffron">{items.length}</p>
         </div>
       </div>
@@ -107,7 +112,7 @@ export function MenuPage() {
       >
         <input
           className="input"
-          placeholder="ખાદ્ય વસ્તુ"
+          placeholder={t("ખાદ્ય વસ્તુ", "Food item")}
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           required
@@ -115,14 +120,14 @@ export function MenuPage() {
 
         <input
           className="input"
-          placeholder="વસ્તુ કોડ"
+          placeholder={t("વસ્તુ કોડ", "Item code")}
           value={form.code}
           onChange={(e) => setForm({ ...form, code: e.target.value })}
         />
 
         <input
           className="input"
-          placeholder="કેટેગરી"
+          placeholder={t("કેટેગરી", "Category")}
           value={form.category}
           onChange={(e) => setForm({ ...form, category: e.target.value })}
           required
@@ -135,7 +140,7 @@ export function MenuPage() {
           <input
             type="text"
             inputMode="numeric"
-            placeholder="કિંમત દાખલ કરો"
+            placeholder={t("કિંમત દાખલ કરો", "Enter price")}
             value={form.price === 0 ? "" : form.price}
             onChange={(e) => {
               const value = e.target.value;
@@ -161,13 +166,13 @@ export function MenuPage() {
             })
           }
         >
-          <option value="veg">વેજ</option>
-          <option value="non-veg">નોન-વેજ</option>
+          <option value="veg">{t("વેજ", "Veg")}</option>
+          <option value="non-veg">{t("નોન-વેજ", "Non-Veg")}</option>
         </select>
 
         <button className="btn-primary">
           <Plus size={17} />
-          ઉમેરો
+          {t("ઉમેરો", "Add")}
         </button>
       </form>
       {/* MENU LIST */}
@@ -211,20 +216,19 @@ export function MenuPage() {
                       : "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
                   }`}
                 >
-                  {item.isAvailable ? "ઉપલબ્ધ" : "ઉપલબ્ધ નથી"}
+                  {item.isAvailable ? t("ઉપલબ્ધ", "Available") : t("ઉપલબ્ધ નથી", "Unavailable")}
                 </span>
               </div>
             </div>
 
-            <div className="mt-5 flex gap-2">
-              <button
-                onClick={() => toggle(item)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-50 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
-              >
-                <Save size={16} />
-                બદલો
-              </button>
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <ToggleSwitch
+                checked={item.isAvailable}
+                onChange={() => toggle(item)}
+                label={item.isAvailable ? t("ઉપલબ્ધ", "Available") : t("ઉપલબ્ધ નથી", "Unavailable")}
+              />
 
+              <div className="flex gap-2">
               <button
                 onClick={() => openEdit(item)}
                 className="rounded-lg bg-sky-50 p-3 text-sky-700 transition hover:bg-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20"
@@ -238,6 +242,7 @@ export function MenuPage() {
               >
                 <Trash2 size={16} />
               </button>
+              </div>
             </div>
           </div>
         ))}
@@ -247,7 +252,7 @@ export function MenuPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
           <div className="glass w-full max-w-lg rounded-2xl p-6 shadow-2xl">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-2xl font-black">મેનુ વસ્તુ સંપાદિત કરો</h2>
+              <h2 className="text-2xl font-black">{t("મેનુ વસ્તુ સંપાદિત કરો", "Edit Menu Item")}</h2>
 
               <button className="btn-soft p-2" onClick={() => setEditModal(false)}>
                 <X />
@@ -257,7 +262,7 @@ export function MenuPage() {
             <div className="space-y-4">
               <input
                 className="input w-full"
-                placeholder="ખાદ્ય વસ્તુ"
+                placeholder={t("ખાદ્ય વસ્તુ", "Food item")}
                 value={editItem.name}
                 onChange={(e) =>
                   setEditItem({
@@ -269,7 +274,7 @@ export function MenuPage() {
 
               <input
                 className="input w-full"
-                placeholder="વસ્તુ કોડ"
+                placeholder={t("વસ્તુ કોડ", "Item code")}
                 value={editItem.code}
                 onChange={(e) =>
                   setEditItem({
@@ -281,7 +286,7 @@ export function MenuPage() {
 
               <input
                 className="input w-full"
-                placeholder="કેટેગરી"
+                placeholder={t("કેટેગરી", "Category")}
                 value={editItem.category}
                 onChange={(e) =>
                   setEditItem({
@@ -300,7 +305,7 @@ export function MenuPage() {
                   className="input w-full pl-10"
                   type="text"
                   inputMode="numeric"
-                  placeholder="કિંમત દાખલ કરો"
+                  placeholder={t("કિંમત દાખલ કરો", "Enter price")}
                   value={editItem.price || ""}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -325,14 +330,13 @@ export function MenuPage() {
                   })
                 }
               >
-                <option value="veg">વેજ</option>
-                <option value="non-veg">નોન-વેજ</option>
-                <option value="egg">ઇંડા</option>
+                <option value="veg">{t("વેજ", "Veg")}</option>
+                <option value="non-veg">{t("નોન-વેજ", "Non-Veg")}</option>
               </select>
 
               <button onClick={updateItem} className="btn-primary w-full">
                 <Save size={18} />
-                મેનુ અપડેટ કરો
+                {t("મેનુ અપડેટ કરો", "Update Menu")}
               </button>
             </div>
           </div>

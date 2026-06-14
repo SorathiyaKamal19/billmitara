@@ -8,5 +8,5 @@ orderRoutes.get('/', listOrders);
 orderRoutes.get('/:id', authorize('owner', 'manager', 'waiter', 'chef'), getOrder);
 orderRoutes.post('/', authorize('owner', 'manager', 'waiter'), createOrder);
 orderRoutes.patch('/:id', authorize('owner', 'manager', 'waiter'), updateOrder);
-orderRoutes.patch('/:id/status', authorize('owner', 'manager', 'chef'), updateOrderStatus);
+orderRoutes.patch('/:id/status', authorize('owner', 'manager', 'waiter', 'chef'), updateOrderStatus);
 orderRoutes.post('/:id/items', authorize('owner', 'manager', 'waiter'), addItemsToOrder);

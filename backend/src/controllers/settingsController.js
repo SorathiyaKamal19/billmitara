@@ -12,6 +12,7 @@ const settingsSchema = z.object({
   gstRate: z.number().min(0).max(100).optional(),
   takeawayChargeEnabled: z.boolean().optional(),
   takeawayCharge: z.number().min(0).optional(),
+  parcelCharge: z.number().min(0).optional(),
   brandColor: z.string().optional(),
   qrMenuUrl: z.string().optional()
 });

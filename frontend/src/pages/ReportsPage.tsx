@@ -13,8 +13,10 @@ import { Invoice } from "../types";
 import { money, shortDate } from "../utils/format";
 import { paymentLabel } from "../utils/gujarati";
 import { toast } from "react-hot-toast";
+import { useLanguage } from "../context/LanguageContext";
 
 export function ReportsPage() {
+  const { t } = useLanguage();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [editModal, setEditModal] = useState(false);
 
@@ -52,7 +54,7 @@ export function ReportsPage() {
 
     setDiscountValue(0);
 
-    setReason("માલિક સુધારો");
+    setReason(t("માલિક સુધારો", "Owner correction"));
 
     setEditModal(true);
   }
@@ -72,7 +74,7 @@ export function ReportsPage() {
 
     setEditModal(false);
 
-    toast.success("ઇન્વોઇસ સફળતાપૂર્વક અપડેટ થયું");
+    toast.success(t("ઇન્વોઇસ સફળતાપૂર્વક અપડેટ થયું", "Invoice updated successfully"));
   }
 
   return (
@@ -80,29 +82,29 @@ export function ReportsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-bold uppercase tracking-wider text-saffron">
-            રિપોર્ટ
+            {t("રિપોર્ટ", "Reports")}
           </p>
-          <h1 className="text-3xl font-black">વેચાણ અને GST રિપોર્ટ</h1>
+          <h1 className="text-3xl font-black">{t("વેચાણ અને GST રિપોર્ટ", "Sales & GST reports")}</h1>
         </div>
         <button className="btn-primary" onClick={exportExcel}>
-          <FileSpreadsheet size={18} /> Excel એક્સપોર્ટ કરો
+          <FileSpreadsheet size={18} /> {t("Excel એક્સપોર્ટ કરો", "Export Excel")}
         </button>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
-          label="આવક"
+          label={t("આવક", "Revenue")}
           value={money(total)}
           icon={IndianRupee}
           accent="rgb(var(--app-main-color-rgb))"
         />
         <StatCard
-          label="GST વસૂલાત"
+          label={t("GST વસૂલાત", "GST Collected")}
           value={money(gst)}
           icon={ReceiptIndianRupee}
           accent="#10b981"
         />
         <StatCard
-          label="બિલ"
+          label={t("બિલ", "Bills")}
           value={String(invoices.length)}
           icon={Download}
           accent="#7c3aed"
@@ -113,14 +115,14 @@ export function ReportsPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-white/70 dark:bg-white/10">
               <tr>
-                <th className="p-4">બિલ</th>
-                <th>ગ્રાહક</th>
+                <th className="p-4">{t("બિલ", "Bill")}</th>
+                <th>{t("ગ્રાહક", "Customer")}</th>
                 <th>GST</th>
-                <th>કુલ</th>
-                <th>પેમેન્ટ</th>
+                <th>{t("કુલ", "Total")}</th>
+                <th>{t("પેમેન્ટ", "Payment")}</th>
                 <th>WhatsApp</th>
-                <th>તારીખ</th>
-                <th>સંપાદન</th>
+                <th>{t("તારીખ", "Date")}</th>
+                <th>{t("સંપાદન", "Edit")}</th>
               </tr>
             </thead>
             <tbody>
@@ -130,7 +132,7 @@ export function ReportsPage() {
                   key={invoice._id}
                 >
                   <td className="p-4 font-bold">{invoice.billNumber}</td>
-                  <td>{invoice.customerName || "વૉક-ઇન"}</td>
+                  <td>{invoice.customerName || t("વૉક-ઇન", "Walk-in")}</td>
                   <td>{money(invoice.gst)}</td>
                   <td className="font-black">{money(invoice.total)}</td>
                   <td>{paymentLabel(invoice.paymentMode)}</td>
@@ -142,7 +144,7 @@ export function ReportsPage() {
                       onClick={() => editInvoice(invoice)}
                     >
                       <Pencil size={15} />
-                      સંપાદિત કરો
+                      {t("સંપાદિત કરો", "Edit")}
                     </button>
                   </td>
                 </tr>
@@ -166,7 +168,7 @@ export function ReportsPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-bold uppercase tracking-wider text-saffron">
-                    ઇન્વોઇસ એડિટર
+                    {t("ઇન્વોઇસ એડિટર", "Invoice Editor")}
                   </p>
 
                   <h2 className="mt-1 text-2xl font-black">
@@ -174,7 +176,7 @@ export function ReportsPage() {
                   </h2>
 
                   <p className="mt-1 text-sm text-gray-500">
-                    {selectedInvoice.customerName || "વૉક-ઇન ગ્રાહક"}
+                    {selectedInvoice.customerName || t("વૉક-ઇન ગ્રાહક", "Walk-in Customer")}
                   </p>
                 </div>
 
@@ -193,7 +195,7 @@ export function ReportsPage() {
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl bg-saffron/5 p-4 dark:bg-saffron/10">
                   <p className="text-xs font-bold uppercase text-gray-500">
-                    હાલનું કુલ
+                    {t("હાલનું કુલ", "Current Total")}
                   </p>
 
                   <h3 className="mt-2 text-2xl font-black text-saffron">
@@ -213,7 +215,7 @@ export function ReportsPage() {
 
                 <div className="rounded-2xl bg-blue-50 p-4 dark:bg-blue-500/10">
                   <p className="text-xs font-bold uppercase text-gray-500">
-                    પેમેન્ટ
+                    {t("પેમેન્ટ", "Payment")}
                   </p>
 
                   <h3 className="mt-2 text-lg font-black capitalize">
@@ -227,7 +229,7 @@ export function ReportsPage() {
                 {/* Discount Type */}
                 <div>
                   <label className="mb-3 block text-sm font-bold">
-                    ડિસ્કાઉન્ટ પ્રકાર
+                    {t("ડિસ્કાઉન્ટ પ્રકાર", "Discount Type")}
                   </label>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -240,7 +242,7 @@ export function ReportsPage() {
                           : "border-gray-200 dark:border-white/10"
                       }`}
                     >
-                      ₹ Fixed Amount
+                      {t("₹ નિશ્ચિત રકમ", "₹ Fixed Amount")}
                     </button>
 
                     <button
@@ -252,7 +254,7 @@ export function ReportsPage() {
                           : "border-gray-200 dark:border-white/10"
                       }`}
                     >
-                      % ટકા
+                      {t("% ટકા", "% Percentage")}
                     </button>
                   </div>
                 </div>
@@ -260,13 +262,13 @@ export function ReportsPage() {
                 {/* Discount Value */}
                 <div>
                   <label className="mb-2 block text-sm font-bold">
-                    ડિસ્કાઉન્ટ મૂલ્ય
+                    {t("ડિસ્કાઉન્ટ મૂલ્ય", "Discount Value")}
                   </label>
 
                   <input
                     className="input h-12"
                     type="number"
-                    placeholder="ડિસ્કાઉન્ટ મૂલ્ય દાખલ કરો"
+                    placeholder={t("ડિસ્કાઉન્ટ મૂલ્ય દાખલ કરો", "Enter discount value")}
                     value={discountValue}
                     onChange={(e) => setDiscountValue(Number(e.target.value))}
                   />
@@ -275,12 +277,12 @@ export function ReportsPage() {
                 {/* Reason */}
                 <div>
                   <label className="mb-2 block text-sm font-bold">
-                    સંપાદનનું કારણ
+                    {t("સંપાદનનું કારણ", "Reason For Edit")}
                   </label>
 
                   <textarea
                     className="input min-h-[120px]"
-                    placeholder="આ ઇન્વોઇસ કેમ સંપાદિત થઈ રહ્યું છે તે લખો..."
+                    placeholder={t("આ ઇન્વોઇસ કેમ સંપાદિત થઈ રહ્યું છે તે લખો...", "Explain why this invoice is being edited...")}
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                   />
@@ -289,11 +291,14 @@ export function ReportsPage() {
                 {/* Preview */}
                 <div className="rounded-2xl border border-saffron/20 bg-saffron/5 p-4">
                   <p className="text-sm font-bold text-saffron">
-                    ઇન્વોઇસ ફેરફાર સૂચના
+                    {t("ઇન્વોઇસ ફેરફાર સૂચના", "Invoice Modification Notice")}
                   </p>
 
                   <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    આ ઇન્વોઇસ પહેલેથી બન્યું છે. ફેરફારો નોંધાશે અને અંતિમ રિપોર્ટમાં દેખાશે.
+                    {t(
+                      "આ ઇન્વોઇસ પહેલેથી બન્યું છે. ફેરફારો નોંધાશે અને અંતિમ રિપોર્ટમાં દેખાશે.",
+                      "This invoice has already been generated. Changes will be recorded and reflected in the final report.",
+                    )}
                   </p>
                 </div>
               </div>
@@ -306,14 +311,14 @@ export function ReportsPage() {
                   className="btn-soft flex-1"
                   onClick={() => setEditModal(false)}
                 >
-                  રદ કરો
+                  {t("રદ કરો", "Cancel")}
                 </button>
 
                 <button
                   className="btn-primary flex-1"
                   onClick={saveInvoiceEdit}
                 >
-                  ફેરફારો સાચવો
+                  {t("ફેરફારો સાચવો", "Save Changes")}
                 </button>
               </div>
             </div>

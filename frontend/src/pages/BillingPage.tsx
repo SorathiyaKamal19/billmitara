@@ -12,7 +12,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
+import { BillTotals } from "../components/BillTotals";
+import { DiscountFields } from "../components/DiscountFields";
 import { Invoice, Order } from "../types";
+import { formatBillDateTime } from "../utils/format";
 import { money } from "../utils/format";
 import { paymentLabel } from "../utils/gujarati";
 
@@ -23,6 +27,7 @@ export function BillingPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const canDiscount = user?.role === "owner";
   const [order, setOrder] = useState<Order | null>(null);
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -36,36 +41,35 @@ export function BillingPage() {
   const [editedItems, setEditedItems] = useState<any[]>([]);
   const [discountType, setDiscountType] = useState<"fixed" | "percentage">("fixed");
   const [discountValue, setDiscountValue] = useState(0);
+  const [discountReason, setDiscountReason] = useState("");
+  const [billingMobile, setBillingMobile] = useState("");
 
   useEffect(() => {
     api.get(`/orders/${orderId}`).then((res) => {
       setOrder(res.data);
-
       setEditedItems(res.data.items);
-
       setPayments({
         cash: res.data.total,
         upi: 0,
       });
       setDiscountType(res.data.discountType || "fixed");
       setDiscountValue(res.data.discountValue || 0);
+      setDiscountReason(res.data.discountReason || "");
+      setBillingMobile(res.data.customerMobile || "");
     });
   }, [orderId]);
+
   function updateItem(index: number, field: string, value: any) {
     const updated = [...editedItems];
-
     updated[index] = {
       ...updated[index],
       [field]: value,
     };
-
     setEditedItems(updated);
   }
 
   function removeItem(index: number) {
-    const updated = editedItems.filter((_, i) => i !== index);
-
-    setEditedItems(updated);
+    setEditedItems(editedItems.filter((_, i) => i !== index));
   }
 
   async function saveChanges() {
@@ -75,18 +79,21 @@ export function BillingPage() {
       items: editedItems,
       discountType: canDiscount ? discountType : order.discountType,
       discountValue: canDiscount ? discountValue : order.discountValue,
+      discountReason: canDiscount ? discountReason.trim() : order.discountReason,
+      customerMobile: billingMobile.trim(),
     };
 
     const { data } = await api.patch(`/orders/${orderId}`, payload);
-
     setOrder(data);
-
+    setBillingMobile(data.customerMobile || "");
     setEditMode(false);
-
-    toast.success("ઓર્ડર અપડેટ થયો");
+    toast.success(t("ઓર્ડર અપડેટ થયો", "Order updated"));
   }
+
   async function bill() {
     if (!order) return;
+    const mobile = billingMobile.trim();
+    if (!mobile) return toast.error(t("બિલ પૂર્ણ કરવા માટે મોબાઇલ નંબર જરૂરી છે", "Customer mobile is required to finalize the bill"));
     const paymentRows =
       paymentMode === "partial"
         ? Object.entries(payments)
@@ -95,15 +102,20 @@ export function BillingPage() {
         : [{ method: paymentMode, amount: order.total }];
     const paid = paymentRows.reduce((sum, row) => sum + row.amount, 0);
     if (Math.abs(paid - order.total) > 0.5)
-      return toast.error("પેમેન્ટ રકમ બિલના કુલ સાથે મળવી જોઈએ");
-    const { data } = await api.post(`/invoices/order/${orderId}`, {
-      sendWhatsApp: Boolean(order.customerMobile),
-      paymentMode,
-      payments: paymentRows,
-    });
-    setInvoice(data);
-    setShowPayment(false);
-    toast.success(`બિલ બન્યું. WhatsApp: ${data.whatsappStatus}`);
+      return toast.error(t("પેમેન્ટ રકમ બિલના કુલ સાથે મળવી જોઈએ", "Payment amount must match bill total"));
+    try {
+      const { data } = await api.post(`/invoices/order/${orderId}`, {
+        sendWhatsApp: true,
+        paymentMode,
+        payments: paymentRows,
+        customerMobile: mobile,
+      });
+      setInvoice(data);
+      setShowPayment(false);
+      toast.success(`${t("બિલ બન્યું", "Bill generated")}. WhatsApp: ${data.whatsappStatus}`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || t("બિલ બનાવી શકાયું નહીં", "Could not generate bill"));
+    }
   }
 
   async function openPdf() {
@@ -116,7 +128,7 @@ export function BillingPage() {
   }
 
   if (!order)
-    return <div className="glass rounded-lg p-8">બિલ લોડ થઈ રહ્યું છે...</div>;
+    return <div className="glass rounded-lg p-8">{t("બિલ લોડ થઈ રહ્યું છે...", "Loading bill...")}</div>;
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -124,17 +136,18 @@ export function BillingPage() {
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 pb-5 dark:border-white/10">
           <div>
             <p className="text-sm font-bold uppercase text-saffron">
-              બિલ પૂર્વદર્શન
+              {t("બિલ પૂર્વદર્શન", "Invoice Preview")}
             </p>
-            <h1 className="text-3xl font-black">
-              રેસ્ટોરન્ટ બિલ
-            </h1>
+            <h1 className="text-3xl font-black">{t("રેસ્ટોરન્ટ બિલ", "Restaurant bill")}</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              {formatBillDateTime(order.createdAt)}
+            </p>
           </div>
           <div className="text-right">
             <p className="font-black">{order.tableName || order.type}</p>
             <p className="text-sm text-gray-500">
-              {order.customerName || "Walk-in"} ·{" "}
-              {order.customerMobile || "No mobile"}
+              {order.customerName || t("વૉક-ઇન", "Walk-in")} ·{" "}
+              {billingMobile || t("મોબાઇલ નથી", "No mobile")}
             </p>
           </div>
         </div>
@@ -145,9 +158,7 @@ export function BillingPage() {
               className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5"
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
-                {/* LEFT */}
                 <div className="flex-1 space-y-3">
-                  {/* ITEM NAME */}
                   {editMode ? (
                     <input
                       className="input w-full"
@@ -159,12 +170,10 @@ export function BillingPage() {
                   ) : (
                     <p className="text-lg font-black">{item.name}</p>
                   )}
-
-                  {/* NOTE */}
                   {editMode ? (
                     <input
                       className="input w-full"
-                      placeholder="નોંધ ઉમેરો..."
+                      placeholder={t("નોંધ ઉમેરો...", "Add note...")}
                       value={item.note || ""}
                       onChange={(e) =>
                         updateItem(index, "note", e.target.value)
@@ -174,10 +183,7 @@ export function BillingPage() {
                     <p className="text-sm text-gray-500">{item.note}</p>
                   ) : null}
                 </div>
-
-                {/* RIGHT */}
                 <div className="flex items-center gap-3">
-                  {/* QUANTITY */}
                   <div className="w-24">
                     {editMode ? (
                       <input
@@ -195,15 +201,11 @@ export function BillingPage() {
                       </div>
                     )}
                   </div>
-
-                  {/* PRICE */}
                   <div className="min-w-[90px] text-right">
                     <p className="text-lg font-black text-saffron">
                       {money(item.price * item.quantity)}
                     </p>
                   </div>
-
-                  {/* DELETE */}
                   {editMode && (
                     <button
                       className="btn-soft h-[48px] w-[48px] p-0"
@@ -217,89 +219,79 @@ export function BillingPage() {
             </div>
           ))}
         </div>
-        <div className="mb-5 flex flex-wrap gap-3 mt-2">
+        <div className="mb-5 mt-2 flex flex-wrap gap-3">
           {!editMode ? (
             <button className="btn-soft" onClick={() => setEditMode(true)}>
               <Pencil size={17} />
-              વસ્તુઓ સંપાદિત કરો
+              {t("વસ્તુઓ સંપાદિત કરો", "Edit items")}
             </button>
           ) : (
             <>
               <button className="btn-primary" onClick={saveChanges}>
                 <Save size={17} />
-                ફેરફારો સાચવો
+                {t("ફેરફારો સાચવો", "Save changes")}
               </button>
-
               <button
                 className="btn-soft"
                 onClick={() => {
                   setEditedItems(order.items);
+                  setDiscountType(order.discountType || "fixed");
+                  setDiscountValue(order.discountValue || 0);
+                  setDiscountReason(order.discountReason || "");
                   setEditMode(false);
                 }}
               >
                 <X size={17} />
-                રદ કરો
+                {t("રદ કરો", "Cancel")}
               </button>
             </>
           )}
         </div>
         {canDiscount && editMode && (
-          <div className="mb-5 grid gap-3 rounded-xl border border-saffron/20 bg-saffron/10 p-4 sm:grid-cols-[1fr_140px_140px]">
-            <div>
-              <p className="font-black">Owner discount</p>
-              <p className="text-sm text-gray-500">Apply discount before bill confirmation.</p>
-            </div>
-            <select className="input" value={discountType} onChange={(e) => setDiscountType(e.target.value as "fixed" | "percentage")}>
-              <option value="fixed">Rs.</option>
-              <option value="percentage">%</option>
-            </select>
-            <input className="input" type="number" min={0} value={discountValue} onChange={(e) => setDiscountValue(Number(e.target.value))} />
+          <div className="mb-5">
+            <DiscountFields
+              discountType={discountType}
+              discountValue={discountValue}
+              discountReason={discountReason}
+              onTypeChange={setDiscountType}
+              onValueChange={setDiscountValue}
+              onReasonChange={setDiscountReason}
+            />
           </div>
         )}
-        <div className="ml-auto mt-6 max-w-sm space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span>સબટોટલ</span>
-            <b>{money(order.subtotal)}</b>
-          </div>
-          <div className="flex justify-between">
-            <span>ડિસ્કાઉન્ટ</span>
-            <b>{money(order.discount)}</b>
-          </div>
-          <div className="flex justify-between">
-            <span>Parcel charge</span>
-            <b>{money(order.takeawayCharge ?? order.parcelCharge)}</b>
-          </div>
-          {order.gstEnabled && (
-            <div className="flex justify-between">
-              <span>GST</span>
-              <b>{money(order.gst)}</b>
-            </div>
-          )}
-          <div className="flex justify-between border-t border-gray-200 pt-3 text-xl dark:border-white/10">
-            <span className="font-black">અંતિમ રકમ</span>
-            <b>{money(order.total)}</b>
-          </div>
-        </div>
+        <BillTotals
+          className="ml-auto mt-6 max-w-sm"
+          subtotal={order.subtotal}
+          discount={order.discount}
+          discountReason={order.discountReason}
+          takeawayCharge={order.takeawayCharge ?? order.parcelCharge}
+          gstEnabled={order.gstEnabled}
+          gstRate={order.gstRate}
+          gst={order.gst}
+          roundOff={order.roundOff}
+          total={order.total}
+          totalLabel={t("અંતિમ રકમ", "Final amount")}
+        />
       </div>
       <aside className="glass h-fit rounded-lg p-5">
-        <h2 className="text-xl font-black">બિલ ક્રિયાઓ</h2>
+        <h2 className="text-xl font-black">{t("બિલ ક્રિયાઓ", "Bill actions")}</h2>
         <p className="mt-2 text-sm text-gray-500">
-          PDF અને WhatsApp બિલ બનાવવા પહેલાં પેમેન્ટ પુષ્ટિ જરૂરી છે.
+          {t("PDF અને WhatsApp બિલ બનાવવા પહેલાં પેમેન્ટ અને મોબાઇલ નંબર જરૂરી છે.", "Payment and mobile number are required before PDF and WhatsApp bill generation.")}
         </p>
         <button
           className="btn-primary mt-5 w-full"
           onClick={() => setShowPayment(true)}
           disabled={editMode}
         >
-          <MessageCircle size={18} /> પેમેન્ટ અને બિલ બનાવો
+          <MessageCircle size={18} /> {t("પેમેન્ટ અને બિલ બનાવો", "Payment & Generate")}
         </button>
         {invoice && (
           <div className="mt-4 space-y-3">
             <button className="btn-soft w-full" onClick={openPdf}>
-              <Download size={18} /> PDF ખોલો
+              <Download size={18} /> {t("PDF ખોલો", "Open PDF")}
             </button>
             <button className="btn-soft w-full" onClick={() => window.print()}>
-              <Printer size={18} /> બિલ પ્રિન્ટ કરો
+              <Printer size={18} /> {t("બિલ પ્રિન્ટ કરો", "Print bill")}
             </button>
             <div className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
               {invoice.billNumber} · {invoice.whatsappStatus}
@@ -308,7 +300,7 @@ export function BillingPage() {
               className="btn-primary w-full"
               onClick={() => navigate("/tables")}
             >
-              ફ્લોર પર પાછા જાઓ
+              {t("ફ્લોર પર પાછા જાઓ", "Back to floor")}
             </button>
           </div>
         )}
@@ -317,10 +309,22 @@ export function BillingPage() {
       {showPayment && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
           <div className="glass w-full max-w-md rounded-lg p-5">
-            <h2 className="text-xl font-black">પેમેન્ટ પુષ્ટિ કરો</h2>
+            <h2 className="text-xl font-black">{t("પેમેન્ટ પુષ્ટિ કરો", "Confirm payment")}</h2>
             <p className="mt-1 text-sm text-gray-500">
-              પેમેન્ટ પુષ્ટિ પછી જ બિલ બનશે.
+              {t("પેમેન્ટ પુષ્ટિ પછી જ બિલ બનશે.", "Bill generates only after payment confirmation.")}
             </p>
+            <label className="mt-4 block">
+              <span className="mb-1 block text-sm font-bold">
+                {t("ગ્રાહકનું મોબાઇલ", "Customer mobile")} *
+              </span>
+              <input
+                className="input"
+                placeholder={t("10 અંકનો મોબાઇલ નંબર", "10-digit mobile number")}
+                value={billingMobile}
+                onChange={(e) => setBillingMobile(e.target.value)}
+                required
+              />
+            </label>
             <div className="mt-4 grid grid-cols-3 gap-2">
               {(["cash", "upi", "partial"] as const).map((mode) => (
                 <button
@@ -357,8 +361,7 @@ export function BillingPage() {
                   </label>
                 ))}
                 <p className="text-sm font-bold">
-                  વિભાગિત કુલ:{" "}
-                  {money(payments.cash + payments.upi)} /{" "}
+                  {t("વિભાગિત કુલ", "Split total")}: {money(payments.cash + payments.upi)} /{" "}
                   {money(order.total)}
                 </p>
               </div>
@@ -368,10 +371,10 @@ export function BillingPage() {
                 className="btn-soft flex-1"
                 onClick={() => setShowPayment(false)}
               >
-                રદ કરો
+                {t("રદ કરો", "Cancel")}
               </button>
               <button className="btn-primary flex-1" onClick={bill}>
-                પુષ્ટિ કરો અને બિલ બનાવો
+                {t("પુષ્ટિ કરો અને બિલ બનાવો", "Confirm & Bill")}
               </button>
             </div>
           </div>
