@@ -4,18 +4,17 @@ import { API_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 export function useSocket() {
-  const { user } = useAuth();
+  const { token, user } = useAuth();
   const socket = useMemo(() => io(API_URL, { autoConnect: false }), []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!token || !user) return;
+    socket.auth = { token };
     socket.connect();
-    socket.emit('join:role', user.role);
-    socket.emit('join:restaurant', user.restaurant?._id);
     return () => {
       socket.disconnect();
     };
-  }, [socket, user]);
+  }, [socket, token, user]);
 
   return socket;
 }

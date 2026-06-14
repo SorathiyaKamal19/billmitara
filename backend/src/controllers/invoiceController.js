@@ -3,6 +3,7 @@ import { Invoice } from '../models/Invoice.js';
 import { Order } from '../models/Order.js';
 import { Restaurant } from '../models/Restaurant.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiError } from '../utils/apiError.js';
 import { createInvoiceForOrder, buildInvoicePdfBuffer } from '../services/invoiceService.js';
 import { calculateOrderTotals } from '../utils/tax.js';
 
@@ -31,8 +32,10 @@ export const createInvoice = asyncHandler(async (req, res) => {
 
 export const getInvoicePdf = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findOne({ _id: req.params.id, restaurant: req.user.restaurant });
+  if (!invoice) throw new ApiError(404, 'Invoice not found');
   const order = await Order.findById(invoice.order);
   const restaurant = await Restaurant.findById(invoice.restaurant);
+  if (!order || !restaurant) throw new ApiError(404, 'Invoice data not found');
   const pdf = await buildInvoicePdfBuffer(invoice, order, restaurant);
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="${invoice.billNumber}.pdf"`);
@@ -69,6 +72,7 @@ export const updateFinalizedInvoice = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findOne({ _id: req.params.id, restaurant: req.user.restaurant });
   if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
   const order = await Order.findOne({ _id: invoice.order, restaurant: req.user.restaurant });
+  if (!order) throw new ApiError(404, 'Order not found');
   const discountType = req.body.discountType || invoice.discountType || 'fixed';
   const discountValue = Number(req.body.discountValue ?? invoice.discountValue ?? invoice.discount ?? 0);
   const totals = calculateOrderTotals(order.items, {

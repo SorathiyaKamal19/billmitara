@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { MenuItem } from '../models/MenuItem.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/apiError.js';
+import { boundedQueryString, escapeRegex } from '../utils/security.js';
 
 const menuSchema = z.object({
   name: z.string().min(2),
@@ -16,14 +17,17 @@ const menuSchema = z.object({
 
 export const listMenu = asyncHandler(async (req, res) => {
   const query = { restaurant: req.user.restaurant };
-  if (req.query.q) {
+  const q = boundedQueryString(req.query.q);
+  if (q) {
+    const search = new RegExp(escapeRegex(q), 'i');
     query.$or = [
-      { name: new RegExp(req.query.q, 'i') },
-      { code: new RegExp(req.query.q, 'i') },
-      { category: new RegExp(req.query.q, 'i') }
+      { name: search },
+      { code: search },
+      { category: search }
     ];
   }
-  if (req.query.category) query.category = req.query.category;
+  const category = boundedQueryString(req.query.category);
+  if (category) query.category = category;
   const items = await MenuItem.find(query).sort({ category: 1, name: 1 });
   res.json(items);
 });
@@ -47,12 +51,12 @@ export const createMenuItem = asyncHandler(async (req, res) => {
   const input = menuSchema.parse(req.body);
   const duplicateQuery = {
     restaurant: req.user.restaurant,
-    name: new RegExp(`^${input.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+    name: new RegExp(`^${escapeRegex(input.name)}$`, 'i')
   };
   if (input.code?.trim()) {
     const codeDuplicate = await MenuItem.findOne({
       restaurant: req.user.restaurant,
-      code: new RegExp(`^${input.code.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+      code: new RegExp(`^${escapeRegex(input.code.trim())}$`, 'i')
     });
     if (codeDuplicate) throw new ApiError(409, 'An item with this code already exists');
   }
@@ -68,7 +72,7 @@ export const updateMenuItem = asyncHandler(async (req, res) => {
     const duplicate = await MenuItem.findOne({
       _id: { $ne: req.params.id },
       restaurant: req.user.restaurant,
-      name: new RegExp(`^${input.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+      name: new RegExp(`^${escapeRegex(input.name)}$`, 'i')
     });
     if (duplicate) throw new ApiError(409, 'An item with this name already exists');
   }
@@ -76,7 +80,7 @@ export const updateMenuItem = asyncHandler(async (req, res) => {
     const codeDuplicate = await MenuItem.findOne({
       _id: { $ne: req.params.id },
       restaurant: req.user.restaurant,
-      code: new RegExp(`^${input.code.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+      code: new RegExp(`^${escapeRegex(input.code.trim())}$`, 'i')
     });
     if (codeDuplicate) throw new ApiError(409, 'An item with this code already exists');
   }

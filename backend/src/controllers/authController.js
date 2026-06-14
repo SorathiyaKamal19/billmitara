@@ -1,10 +1,13 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { z } from 'zod';
 import { Restaurant } from '../models/Restaurant.js';
 import { User } from '../models/User.js';
+import { PasswordResetOtp } from '../models/PasswordResetOtp.js';
 import { env } from '../config/env.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/apiError.js';
+import { sendPasswordResetOtp } from '../services/emailService.js';
 
 const loginSchema = z.object({ identifier: z.string().trim().min(1), password: z.string().min(8) });
 const registerSchema = z.object({
@@ -23,6 +26,21 @@ const passwordSchema = z.object({
   currentPassword: z.string().min(8),
   newPassword: z.string().min(8)
 });
+const forgotPasswordSchema = z.object({
+  email: z.string().trim().email().transform((value) => value.toLowerCase())
+});
+const resetPasswordSchema = z.object({
+  email: z.string().trim().email().transform((value) => value.toLowerCase()),
+  otp: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits'),
+  newPassword: z.string().min(8)
+});
+
+function hashOtp(userId, otp) {
+  return crypto
+    .createHmac('sha256', env.jwtSecret)
+    .update(`${userId}:${otp}`)
+    .digest('hex');
+}
 
 function signToken(user) {
   return jwt.sign({ id: user._id, role: user.role }, env.jwtSecret, { expiresIn: env.jwtExpiresIn });
@@ -31,8 +49,11 @@ function signToken(user) {
 export const login = asyncHandler(async (req, res) => {
   const input = loginSchema.parse(req.body);
   const identifier = input.identifier.toLowerCase();
+  const compactPhone = input.identifier.replace(/[\s()-]/g, '');
+  const phoneCandidates = new Set([input.identifier, compactPhone]);
+  if (/^\d{10}$/.test(compactPhone)) phoneCandidates.add(`+91${compactPhone}`);
   const user = await User.findOne({
-    $or: [{ email: identifier }, { phone: input.identifier }]
+    $or: [{ email: identifier }, { phone: { $in: [...phoneCandidates] } }]
   }).select('+password').populate('restaurant');
   if (!user || !(await user.comparePassword(input.password))) throw new ApiError(401, 'Invalid login or password');
   if (!user.isActive) throw new ApiError(403, 'User is disabled');
@@ -90,4 +111,68 @@ export const changePassword = asyncHandler(async (req, res) => {
   user.password = input.newPassword;
   await user.save();
   res.json({ message: 'Password changed successfully' });
+});
+
+export const requestPasswordReset = asyncHandler(async (req, res) => {
+  const { email } = forgotPasswordSchema.parse(req.body);
+  const user = await User.findOne({ email, isActive: true });
+  const response = {
+    message: 'If an active account exists for this email, a reset code has been sent.'
+  };
+
+  if (!user) return res.json(response);
+
+  const existing = await PasswordResetOtp.findOne({ user: user._id });
+  if (existing && existing.createdAt > new Date(Date.now() - 60 * 1000)) {
+    return res.status(429).json({ message: 'Please wait one minute before requesting another code' });
+  }
+
+  const otp = crypto.randomInt(100000, 1000000).toString();
+  const expiresAt = new Date(Date.now() + env.passwordReset.otpMinutes * 60 * 1000);
+  await PasswordResetOtp.findOneAndUpdate(
+    { user: user._id },
+    { otpHash: hashOtp(user._id, otp), attempts: 0, expiresAt },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  try {
+    await sendPasswordResetOtp({ email: user.email, name: user.name, otp });
+  } catch (error) {
+    await PasswordResetOtp.deleteOne({ user: user._id });
+    throw error;
+  }
+
+  res.json(response);
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const input = resetPasswordSchema.parse(req.body);
+  const user = await User.findOne({ email: input.email, isActive: true }).select('+password');
+  if (!user) throw new ApiError(400, 'Invalid or expired reset code');
+
+  const reset = await PasswordResetOtp.findOne({ user: user._id });
+  if (!reset || reset.expiresAt <= new Date()) {
+    if (reset) await reset.deleteOne();
+    throw new ApiError(400, 'Invalid or expired reset code');
+  }
+  if (reset.attempts >= env.passwordReset.maxAttempts) {
+    await reset.deleteOne();
+    throw new ApiError(429, 'Too many incorrect attempts. Request a new code');
+  }
+
+  const candidateHash = hashOtp(user._id, input.otp);
+  const expected = Buffer.from(reset.otpHash, 'hex');
+  const candidate = Buffer.from(candidateHash, 'hex');
+  const matches = expected.length === candidate.length && crypto.timingSafeEqual(expected, candidate);
+
+  if (!matches) {
+    reset.attempts += 1;
+    await reset.save();
+    throw new ApiError(400, 'Invalid or expired reset code');
+  }
+
+  user.password = input.newPassword;
+  await user.save();
+  await PasswordResetOtp.deleteOne({ user: user._id });
+  res.json({ message: 'Password reset successfully. You can now sign in.' });
 });

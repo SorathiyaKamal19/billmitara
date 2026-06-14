@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import * as yup from 'yup';
 import { api } from '../api/client';
 import { Role, User } from '../types';
+import { PasswordInput } from '../components/PasswordInput';
 
 type StaffRole = Exclude<Role, 'owner'>;
 
@@ -162,7 +163,7 @@ export function StaffPage() {
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-bold">{editing ? 'New password' : 'Password'}</span>
-              <input className="input" type="password" value={form.password} onChange={(e) => setForm((current) => ({ ...current, password: e.target.value }))} minLength={8} required={!editing} placeholder={editing ? 'Leave blank to keep current' : ''} />
+              <PasswordInput value={form.password} onChange={(e) => setForm((current) => ({ ...current, password: e.target.value }))} minLength={8} required={!editing} placeholder={editing ? 'Leave blank to keep current' : ''} />
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-bold">Role</span>

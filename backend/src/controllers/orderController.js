@@ -7,6 +7,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/apiError.js';
 import { calculateOrderTotals } from '../utils/tax.js';
 import { emitKitchen, emitRestaurant } from '../config/socket.js';
+import { boundedInt } from '../utils/security.js';
 
 const orderSchema = z.object({
   table: z.string().optional().nullable(),
@@ -71,7 +72,7 @@ export const listOrders = asyncHandler(async (req, res) => {
   }
   if (req.query.status) query.status = req.query.status;
   if (req.query.type) query.type = req.query.type;
-  const orders = await Order.find(query).sort({ createdAt: -1 }).limit(Number(req.query.limit || 50));
+  const orders = await Order.find(query).sort({ createdAt: -1 }).limit(boundedInt(req.query.limit, { max: 100, fallback: 50 }));
   res.json(orders);
 });
 
@@ -133,6 +134,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
   if (order.status === 'cancelled') throw new ApiError(400, 'Order is already cancelled');
 
   if (status === 'cancelled') {
+    if (req.user.role === 'chef') throw new ApiError(403, 'Chef cannot cancel orders');
     if (!reason) throw new ApiError(400, 'Cancellation reason is required');
     order.cancellationReason = reason;
     order.cancelledAt = new Date();
