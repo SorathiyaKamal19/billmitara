@@ -57,25 +57,25 @@ export function TablesPage() {
         {user?.role === "owner" && (
           <form
             onSubmit={createTable}
-            className="glass flex flex-wrap gap-2 rounded-lg p-2"
+            className="glass grid w-full grid-cols-2 gap-2 rounded-lg p-2 sm:w-auto sm:flex sm:flex-wrap"
           >
             <input
-              className="input w-36"
+              className="input col-span-2 sm:w-36"
               placeholder={t("ટેબલનું નામ", "Table name")}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
             <input
-              className="input w-24"
+              className="input sm:w-24"
               type="number"
               min={1}
               value={capacity}
               placeholder={t("બેઠકો", "Seats")}
               onChange={(e) => setCapacity(Number(e.target.value))}
             />
-            <button className="btn-primary">
-              <Plus size={17} /> {t("ઉમેરો", "Add")}
+            <button className="btn-primary min-w-0">
+              <Plus size={17} /> {t("ઉમેરો", "Add table")}
             </button>
           </form>
         )}
@@ -137,7 +137,7 @@ export function TablesPage() {
                     <Eye size={17} /> {t("ઓર્ડર જુઓ", "View order")}
                   </button>
                 )}
-                <button
+                <button
                   onClick={() =>
                     navigate(
                       table.currentOrder
@@ -145,12 +145,15 @@ export function TablesPage() {
                         : `/orders/${table._id}`,
                     )
                   }
-                  className="btn-soft"
+                  className={table.currentOrder ? "btn-soft" : "btn-soft col-span-2"}
                 >
                   <PlusCircle size={17} />{" "}
-                  {table.currentOrder ? t("વસ્તુઓ ઉમેરો", "Add items") : t("ઓર્ડર લો", "Take order")}
-                </button>
-                <button
+                  {table.currentOrder ? t("વસ્તુઓ ઉમેરો", "Add items") : t("ઓર્ડર લો", "Create order")}
+                </button>
+
+                {table.currentOrder && (
+
+                <button
                   disabled={!table.currentOrder}
                   onClick={() =>
                     table.currentOrder &&
@@ -159,7 +162,9 @@ export function TablesPage() {
                   className="btn-primary"
                 >
                   <CreditCard size={17} /> {t("બિલ", "Bill")}
-                </button>
+                </button>
+
+                )}
               </div>
             </div>
           ))}
@@ -167,4 +172,4 @@ export function TablesPage() {
     </div>
   );
 }
-
+
