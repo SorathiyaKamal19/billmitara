@@ -7,6 +7,9 @@ export function errorHandler(err, req, res, next) {
   if (err.name === 'ZodError') {
     return res.status(400).json({ message: 'Validation failed', issues: err.issues });
   }
+  if (err.name === 'CastError') {
+    return res.status(400).json({ message: 'Invalid request parameter' });
+  }
   const statusCode = err.statusCode || res.statusCode || 500;
   res.status(statusCode).json({
     message: err.message || 'Server error',

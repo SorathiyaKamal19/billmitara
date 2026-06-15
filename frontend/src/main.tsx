@@ -11,6 +11,7 @@ import { CustomersPage } from './pages/CustomersPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { KitchenPage } from './pages/KitchenPage';
 import { LoginPage } from './pages/LoginPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { MenuPage } from './pages/MenuPage';
 import { OrderPage } from './pages/OrderPage';
 import { OrderDetailsPage } from './pages/OrderDetailsPage';
@@ -42,6 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/register-owner" element={<RegisterOwnerPage />} />
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route index element={<HomeRedirect />} />

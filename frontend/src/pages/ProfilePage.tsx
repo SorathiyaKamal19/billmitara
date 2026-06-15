@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import * as yup from 'yup';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { PasswordInput } from '../components/PasswordInput';
 
 const profileSchema = yup.object({
   name: yup.string().trim().min(2, 'Name is too short').required('Name is required')
@@ -122,15 +123,15 @@ export function ProfilePage() {
           <div className="space-y-4">
             <label className="block">
               <span className="mb-2 block text-sm font-bold">Current password</span>
-              <input className="input" type="password" value={passwords.currentPassword} onChange={(e) => setPasswords((current) => ({ ...current, currentPassword: e.target.value }))} minLength={8} required />
+              <PasswordInput value={passwords.currentPassword} onChange={(e) => setPasswords((current) => ({ ...current, currentPassword: e.target.value }))} minLength={8} autoComplete="current-password" required />
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-bold">New password</span>
-              <input className="input" type="password" value={passwords.newPassword} onChange={(e) => setPasswords((current) => ({ ...current, newPassword: e.target.value }))} minLength={8} required />
+              <PasswordInput value={passwords.newPassword} onChange={(e) => setPasswords((current) => ({ ...current, newPassword: e.target.value }))} minLength={8} autoComplete="new-password" required />
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-bold">Confirm password</span>
-              <input className="input" type="password" value={passwords.confirmPassword} onChange={(e) => setPasswords((current) => ({ ...current, confirmPassword: e.target.value }))} minLength={8} required />
+              <PasswordInput value={passwords.confirmPassword} onChange={(e) => setPasswords((current) => ({ ...current, confirmPassword: e.target.value }))} minLength={8} autoComplete="new-password" required />
             </label>
             <button disabled={savingPassword} className="btn-primary">
               <KeyRound size={17} />

@@ -78,6 +78,59 @@ TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 PUBLIC_API_URL=https://your-api-domain.com
 ```
 
+## Gmail OTP Password Reset
+
+Forgot-password emails are sent through Gmail SMTP. The OTP is six digits, stored as a hash, expires after 10 minutes, and is removed after a successful reset.
+
+1. Enable 2-Step Verification on the Google account used to send mail.
+2. Create a Google App Password.
+3. Add these backend environment variables:
+
+```env
+GMAIL_USER=your-account@gmail.com
+GMAIL_APP_PASSWORD=your-16-character-app-password
+MAIL_FROM=BillMitara <your-account@gmail.com>
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+PASSWORD_RESET_OTP_MINUTES=10
+PASSWORD_RESET_MAX_ATTEMPTS=5
+```
+
+Use the Google App Password, not the normal Gmail password. Never place these values in frontend environment variables.
+
+## Production Deployment
+
+Set these variables on the backend host:
+
+```env
+NODE_ENV=production
+PORT=5000
+MONGO_URI=mongodb+srv://...
+JWT_SECRET=use-a-long-random-production-secret
+JWT_EXPIRES_IN=7d
+CLIENT_ORIGIN=https://your-frontend-domain.com
+PUBLIC_API_URL=https://your-backend-domain.com
+GMAIL_USER=your-account@gmail.com
+GMAIL_APP_PASSWORD=your-google-app-password
+MAIL_FROM=BillMitara <your-account@gmail.com>
+```
+
+Set this variable when building the frontend:
+
+```env
+VITE_API_URL=https://your-backend-domain.com
+```
+
+Build and start:
+
+```bash
+npm run build
+npm run start
+```
+
+The backend health endpoint is `GET /api/health`. Ensure the deployment platform allows outbound SMTP connections to Gmail and that `CLIENT_ORIGIN` exactly matches the deployed frontend origin.
+
 ## Verification
 
 - Frontend production build passes: `npm run build --prefix frontend`

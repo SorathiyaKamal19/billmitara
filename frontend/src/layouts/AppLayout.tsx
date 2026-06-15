@@ -28,8 +28,8 @@ export function AppLayout() {
   const [dark, setDark] = useState(() => localStorage.getItem('poss_theme') === 'dark' || document.documentElement.classList.contains('dark'));
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const allowed = nav.filter((item) => item.roles.includes(user?.role || 'manager'));
-  const profileMenuItems = allowed.filter((item) => ['/staff', '/tables', '/settings', '/customers'].includes(item.to));
-  const mobileAllowed = allowed.filter((item) => !['/menu', '/reports', '/profile', '/staff', '/tables', '/settings', '/customers'].includes(item.to));
+  const profileMenuItems = allowed.filter((item) => ['/staff', '/settings', '/customers'].includes(item.to));
+  const mobileAllowed = allowed.filter((item) => !['/menu', '/reports', '/profile', '/staff', '/settings', '/customers'].includes(item.to));
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
@@ -179,7 +179,12 @@ export function AppLayout() {
             )}
           </div>
           <Outlet />
-          <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 gap-1 rounded-lg border border-white/70 bg-white/90 p-2 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-gray-950/90 lg:hidden">
+          <nav
+            className={clsx(
+              'fixed inset-x-3 bottom-3 z-40 grid gap-1 rounded-lg border border-white/70 bg-white/90 p-2 shadow-soft backdrop-blur-xl dark:border-white/10 dark:bg-gray-950/90 lg:hidden',
+              mobileAllowed.length <= 2 ? 'grid-cols-2' : mobileAllowed.length === 3 ? 'grid-cols-3' : mobileAllowed.length === 4 ? 'grid-cols-4' : 'grid-cols-5'
+            )}
+          >
             {mobileAllowed.map(({ to, labelGu, labelEn, icon: Icon }) => (
               <NavLink key={to} to={to} className={({ isActive }) => clsx('grid place-items-center gap-1 rounded-lg px-2 py-2 text-[11px] font-bold', isActive ? 'bg-saffron text-white' : 'text-gray-500')}>
                 <Icon size={18} />

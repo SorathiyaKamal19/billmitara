@@ -6,10 +6,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
-          charts: ['recharts'],
-          ui: ['lucide-react', 'react-hot-toast', 'clsx']
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router-dom)[\\/]/.test(id)) return 'react';
+          if (/[\\/]node_modules[\\/]recharts[\\/]/.test(id)) return 'charts';
+          if (/[\\/]node_modules[\\/](lucide-react|react-hot-toast|clsx)[\\/]/.test(id)) return 'ui';
+          return undefined;
         }
       }
     }
