@@ -17,13 +17,27 @@ function corsOrigin(origin, callback) {
 
 export function createApp() {
   const app = express();
+
+  // Add this line for Render
+  app.set("trust proxy", 1);
+
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(cors({ origin: corsOrigin, credentials: true }));
   app.use(express.json({ limit: '2mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
-  app.use('/api', rateLimit({ windowMs: 15 * 60 * 1000, limit: 600 }), apiRoutes);
+
+  app.use(
+    '/api',
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      limit: 600,
+    }),
+    apiRoutes
+  );
+
   app.use(notFound);
   app.use(errorHandler);
+
   return app;
 }
