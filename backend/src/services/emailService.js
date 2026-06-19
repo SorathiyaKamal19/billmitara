@@ -57,7 +57,13 @@ export async function sendPasswordResetOtp({ email, name, otp }) {
       `
     });
   } catch (error) {
-    console.error('Password reset email failed:', error.message);
+    console.error('Password reset email failed:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      responseCode: error.responseCode,
+      response: error.response
+    });
     if (error instanceof ApiError) throw error;
     throw new ApiError(502, 'Could not send password reset email');
   }
