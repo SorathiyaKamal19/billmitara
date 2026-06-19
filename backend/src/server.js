@@ -4,6 +4,7 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { connectDB } from './config/db.js';
 import { registerSocket } from './config/socket.js';
+import { startKeepAliveCron } from './services/keepAliveService.js';
 
 async function bootstrap() {
   await connectDB();
@@ -13,7 +14,10 @@ async function bootstrap() {
     cors: { origin: env.clientOrigin, credentials: true }
   });
   registerSocket(io);
-  server.listen(env.port, () => console.log(`POSS API running on http://localhost:${env.port}`));
+  server.listen(env.port, () => {
+    console.log(`POSS API running on http://localhost:${env.port}`);
+    startKeepAliveCron();
+  });
 }
 
 bootstrap().catch((error) => {

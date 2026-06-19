@@ -30,9 +30,12 @@ const forgotPasswordSchema = z.object({
   email: z.string().trim().email().transform((value) => value.toLowerCase())
 });
 const resetPasswordSchema = z.object({
-  email: z.string().trim().email().transform((value) => value.toLowerCase()),
-  otp: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits'),
+  resetToken: z.string().min(1),
   newPassword: z.string().min(8)
+});
+const verifyResetOtpSchema = z.object({
+  email: z.string().trim().email().transform((value) => value.toLowerCase()),
+  otp: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits')
 });
 
 function hashOtp(userId, otp) {
@@ -44,6 +47,38 @@ function hashOtp(userId, otp) {
 
 function signToken(user) {
   return jwt.sign({ id: user._id, role: user.role }, env.jwtSecret, { expiresIn: env.jwtExpiresIn });
+}
+
+function signPasswordResetToken(user) {
+  return jwt.sign({ id: user._id, purpose: 'password-reset' }, env.jwtSecret, { expiresIn: '10m' });
+}
+
+async function validatePasswordResetOtp(email, otp) {
+  const user = await User.findOne({ email, isActive: true }).select('+password');
+  if (!user) throw new ApiError(400, 'Invalid or expired reset code');
+
+  const reset = await PasswordResetOtp.findOne({ user: user._id });
+  if (!reset || reset.expiresAt <= new Date()) {
+    if (reset) await reset.deleteOne();
+    throw new ApiError(400, 'Invalid or expired reset code');
+  }
+  if (reset.attempts >= env.passwordReset.maxAttempts) {
+    await reset.deleteOne();
+    throw new ApiError(429, 'Too many incorrect attempts. Request a new code');
+  }
+
+  const candidateHash = hashOtp(user._id, otp);
+  const expected = Buffer.from(reset.otpHash, 'hex');
+  const candidate = Buffer.from(candidateHash, 'hex');
+  const matches = expected.length === candidate.length && crypto.timingSafeEqual(expected, candidate);
+
+  if (!matches) {
+    reset.attempts += 1;
+    await reset.save();
+    throw new ApiError(400, 'Invalid or expired reset code');
+  }
+
+  return { user, reset };
 }
 
 export const login = asyncHandler(async (req, res) => {
@@ -145,32 +180,29 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
   res.json(response);
 });
 
+export const verifyResetOtp = asyncHandler(async (req, res) => {
+  const input = verifyResetOtpSchema.parse(req.body);
+  const { user } = await validatePasswordResetOtp(input.email, input.otp);
+  res.json({
+    message: 'OTP verified successfully. You can now reset your password.',
+    resetToken: signPasswordResetToken(user)
+  });
+});
+
 export const resetPassword = asyncHandler(async (req, res) => {
   const input = resetPasswordSchema.parse(req.body);
-  const user = await User.findOne({ email: input.email, isActive: true }).select('+password');
-  if (!user) throw new ApiError(400, 'Invalid or expired reset code');
-
-  const reset = await PasswordResetOtp.findOne({ user: user._id });
-  if (!reset || reset.expiresAt <= new Date()) {
-    if (reset) await reset.deleteOne();
-    throw new ApiError(400, 'Invalid or expired reset code');
+  let decoded;
+  try {
+    decoded = jwt.verify(input.resetToken, env.jwtSecret);
+  } catch {
+    throw new ApiError(400, 'Password reset session expired. Verify the OTP again');
   }
-  if (reset.attempts >= env.passwordReset.maxAttempts) {
-    await reset.deleteOne();
-    throw new ApiError(429, 'Too many incorrect attempts. Request a new code');
+  if (decoded.purpose !== 'password-reset') {
+    throw new ApiError(400, 'Password reset session expired. Verify the OTP again');
   }
 
-  const candidateHash = hashOtp(user._id, input.otp);
-  const expected = Buffer.from(reset.otpHash, 'hex');
-  const candidate = Buffer.from(candidateHash, 'hex');
-  const matches = expected.length === candidate.length && crypto.timingSafeEqual(expected, candidate);
-
-  if (!matches) {
-    reset.attempts += 1;
-    await reset.save();
-    throw new ApiError(400, 'Invalid or expired reset code');
-  }
-
+  const user = await User.findOne({ _id: decoded.id, isActive: true }).select('+password');
+  if (!user) throw new ApiError(400, 'Password reset session expired. Verify the OTP again');
   user.password = input.newPassword;
   await user.save();
   await PasswordResetOtp.deleteOne({ user: user._id });

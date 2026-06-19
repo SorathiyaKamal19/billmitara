@@ -57,7 +57,7 @@ export function LoginPage() {
           <div className="absolute -bottom-32 -left-20 size-96 rounded-full border border-white/10 bg-blue-400/10" />
           <div className="relative flex h-full flex-col justify-between">
             <div className="flex items-center gap-3">
-              <div className="grid size-12 place-items-center rounded-xl bg-white/15"><ChefHat /></div>
+              <div className="grid size-12 place-items-center rounded-xl bg-white/15"><img src='../../public/assets/billmitara-b-favicon.svg' /></div>
               <div>
                 <p className="text-2xl font-black">BillMitara</p>
                 <p className="text-sm text-white/70">{t('સ્માર્ટ રેસ્ટોરન્ટ POS', 'Smart Restaurant POS')}</p>

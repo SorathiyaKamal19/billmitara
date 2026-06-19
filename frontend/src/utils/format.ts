@@ -29,8 +29,12 @@ export function formatOrderTime(value: string) {
 
 export function formatBillDateTime(value: string | Date) {
   return new Intl.DateTimeFormat(locale(), {
-    dateStyle: 'medium',
-    timeStyle: 'medium',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
     timeZone: TIMEZONE
   }).format(new Date(value));
 }

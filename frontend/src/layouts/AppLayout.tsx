@@ -30,6 +30,8 @@ export function AppLayout() {
   const allowed = nav.filter((item) => item.roles.includes(user?.role || 'manager'));
   const profileMenuItems = allowed.filter((item) => ['/staff', '/settings', '/customers'].includes(item.to));
   const mobileAllowed = allowed.filter((item) => !['/menu', '/reports', '/profile', '/staff', '/settings', '/customers'].includes(item.to));
+  const restaurantName = user?.restaurant?.name || t('Restaurant', 'Restaurant');
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
@@ -57,12 +59,12 @@ export function AppLayout() {
         <div className="flex h-full flex-col">
           <div className="rounded-lg bg-ink p-4 text-white">
             <NavLink to="/" className="flex items-center gap-3 rounded-lg transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40">
-              <div className="grid size-11 place-items-center rounded-lg bg-saffron">
-                <ChefHat size={24} />
+              <div className="grid size-11 shrink-0 place-items-center rounded-lg bg-white/10 p-1">
+                <img src="/favicon.svg" alt="Bill Mitra" className="size-full rounded-md" />
               </div>
-              <div>
-                <p className="text-xl font-black tracking-tight">POSS</p>
-                <p className="text-xs text-white/70">{t('સ્માર્ટ રેસ્ટોરન્ટ POS', 'Smart Restaurant POS')}</p>
+              <div className="min-w-0">
+                <p className="truncate text-xl font-black tracking-tight">{restaurantName}</p>
+                <p className="text-xs font-semibold text-white/70">Bill Mitra App</p>
               </div>
             </NavLink>
           </div>
@@ -83,11 +85,11 @@ export function AppLayout() {
               </NavLink>
             ))}
           </nav>
-          <div className="mt-auto space-y-3">
-            <NavLink to="/profile" className="block rounded-lg border border-gray-200 bg-white p-3 transition hover:border-saffron/40 dark:border-white/10 dark:bg-white/10">
-              <p className="text-sm font-bold">{user?.name}</p>
-              <p className="text-xs capitalize text-gray-500 dark:text-gray-400">{user?.role} · {user?.restaurant?.name}</p>
-            </NavLink>
+          <div className="mt-auto space-y-3 mt-3">
+            <div className="block rounded-lg border border-gray-200 bg-white p-3 transition hover:border-saffron/40 dark:border-white/10 dark:bg-white/10">
+              <p className="text-sm font-bold">Bill Mitra App</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Copyright {currentYear} Bill Mitra. All rights reserved.</p>
+            </div>
             <div className="flex gap-2">
               <LanguageSelector />
               <button
@@ -114,9 +116,12 @@ export function AppLayout() {
       <main className="min-h-screen p-4 pb-24 lg:ml-72 lg:p-8">
         <div className="mx-auto max-w-7xl">
           <div className="relative mb-5 flex items-center justify-between lg:hidden">
-            <div>
-              <p className="text-xl font-black">POSS</p>
-              <p className="text-xs text-gray-500">{user?.restaurant?.name}</p>
+            <div className="flex min-w-0 items-center gap-3">
+              <img src="/favicon.svg" alt="Bill Mitra" className="size-10 shrink-0 rounded-lg" />
+              <div className="min-w-0">
+                <p className="truncate text-xl font-black">{restaurantName}</p>
+                <p className="text-xs font-semibold text-gray-500">Bill Mitra App</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button className="btn-soft" onClick={() => setProfileMenuOpen((value) => !value)}>

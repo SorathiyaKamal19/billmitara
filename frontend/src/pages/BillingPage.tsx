@@ -15,7 +15,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { BillTotals } from "../components/BillTotals";
 import { DiscountFields } from "../components/DiscountFields";
-import { Invoice, Order } from "../types";
+import { Invoice, Order, Restaurant } from "../types";
 import { formatBillDateTime } from "../utils/format";
 import { money } from "../utils/format";
 import { paymentLabel } from "../utils/gujarati";
@@ -29,6 +29,9 @@ export function BillingPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const canDiscount = user?.role === "owner";
+  const [restaurant, setRestaurant] = useState<Partial<Restaurant>>(
+    user?.restaurant || {}
+  );
   const [order, setOrder] = useState<Order | null>(null);
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [showPayment, setShowPayment] = useState(false);
@@ -58,6 +61,13 @@ export function BillingPage() {
       setBillingMobile(res.data.customerMobile || "");
     });
   }, [orderId]);
+
+  useEffect(() => {
+    api
+      .get("/settings")
+      .then((res) => setRestaurant(res.data))
+      .catch(() => setRestaurant(user?.restaurant || {}));
+  }, [user?.restaurant]);
 
   function updateItem(index: number, field: string, value: any) {
     const updated = [...editedItems];
@@ -130,10 +140,77 @@ export function BillingPage() {
   if (!order)
     return <div className="glass rounded-lg p-8">{t("બિલ લોડ થઈ રહ્યું છે...", "Loading bill...")}</div>;
 
+  const billDate = invoice?.createdAt || order.createdAt;
+  const billNumber = invoice?.billNumber || t("Draft bill", "Draft bill");
+  const guestName = order.customerName || t("વૉક-ઇન", "Walk-in");
+  const guestMobile = billingMobile || t("મોબાઇલ નથી", "No mobile");
+  const serviceLabel =
+    order.type === "dine-in"
+      ? order.tableName || t("Dine-in", "Dine-in")
+      : t("Takeaway", "Takeaway");
+  const paymentText = invoice?.payments?.length
+    ? invoice.payments
+        .map((row) => `${paymentLabel(row.method)} ${money(row.amount)}`)
+        .join(" + ")
+    : invoice?.paymentMode
+      ? paymentLabel(invoice.paymentMode)
+      : t("Pending", "Pending");
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-      <div className="glass rounded-lg p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 pb-5 dark:border-white/10">
+    <div className="billing-page grid gap-6 xl:grid-cols-[1fr_360px]">
+      <div className="print-bill glass rounded-lg p-6">
+        <div className="border-b border-dashed border-gray-300 pb-5 text-center dark:border-white/20">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-saffron">
+            {t("Tax Invoice", "Tax Invoice")}
+          </p>
+          <h1 className="mt-2 text-3xl font-black leading-tight">
+            {restaurant.name || user?.restaurant?.name || "BillMitara"}
+          </h1>
+          {restaurant.address && (
+            <p className="mx-auto mt-2 max-w-xl text-sm text-gray-600 dark:text-gray-300">
+              {restaurant.address}
+            </p>
+          )}
+          <div className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-gray-300">
+            {restaurant.phone && <span>{restaurant.phone}</span>}
+            {restaurant.gstEnabled && restaurant.gstNumber && (
+              <span>GSTIN: {restaurant.gstNumber}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-white/10 dark:bg-white/5 sm:grid-cols-2">
+          <div>
+            <p className="text-xs font-bold uppercase text-gray-500">
+              {t("Bill No.", "Bill No.")}
+            </p>
+            <p className="font-black">{billNumber}</p>
+          </div>
+          <div className="sm:text-right">
+            <p className="text-xs font-bold uppercase text-gray-500">
+              {t("Date", "Date")}
+            </p>
+            <p className="font-bold">{formatBillDateTime(billDate)}</p>
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase text-gray-500">
+              {t("Customer", "Customer")}
+            </p>
+            <p className="font-bold">{guestName}</p>
+            <p className="text-gray-500">{guestMobile}</p>
+          </div>
+          <div className="sm:text-right">
+            <p className="text-xs font-bold uppercase text-gray-500">
+              {t("Service", "Service")}
+            </p>
+            <p className="font-bold">{serviceLabel}</p>
+            <p className="text-gray-500">
+              {t("Payment", "Payment")}: {paymentText}
+            </p>
+          </div>
+        </div>
+
+        <div className="no-print flex flex-wrap items-start justify-between gap-4 border-b border-gray-200 pb-5 pt-6 dark:border-white/10">
           <div>
             <p className="text-sm font-bold uppercase text-saffron">
               {t("બિલ પૂર્વદર્શન", "Invoice Preview")}
@@ -151,7 +228,34 @@ export function BillingPage() {
             </p>
           </div>
         </div>
-        <div className="mt-5 space-y-4">
+        <div className="print-items mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-white/5">
+          <div className="grid grid-cols-[1fr_48px_72px_90px] gap-2 border-b border-gray-200 px-4 py-3 text-xs font-black uppercase text-gray-500 dark:border-white/10">
+            <span>{t("Item", "Item")}</span>
+            <span className="text-center">{t("Qty", "Qty")}</span>
+            <span className="text-right">{t("Rate", "Rate")}</span>
+            <span className="text-right">{t("Amount", "Amount")}</span>
+          </div>
+          {editedItems.map((item, index) => (
+            <div
+              key={item._id || `${item.name}-${index}`}
+              className="grid grid-cols-[1fr_48px_72px_90px] gap-2 border-b border-gray-100 px-4 py-3 text-sm last:border-0 dark:border-white/10"
+            >
+              <div className="min-w-0">
+                <p className="font-bold">{item.name}</p>
+                {item.note ? (
+                  <p className="mt-1 text-xs text-gray-500">{item.note}</p>
+                ) : null}
+              </div>
+              <div className="text-center font-bold">{item.quantity}</div>
+              <div className="text-right">{money(item.price)}</div>
+              <div className="text-right font-black">
+                {money(item.price * item.quantity)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="no-print mt-5 space-y-4">
           {editedItems.map((item, index) => (
             <div
               key={item._id || item.name}
@@ -219,7 +323,7 @@ export function BillingPage() {
             </div>
           ))}
         </div>
-        <div className="mb-5 mt-2 flex flex-wrap gap-3">
+        <div className="no-print mb-5 mt-2 flex flex-wrap gap-3">
           {!editMode ? (
             <button className="btn-soft" onClick={() => setEditMode(true)}>
               <Pencil size={17} />
@@ -248,7 +352,7 @@ export function BillingPage() {
           )}
         </div>
         {canDiscount && editMode && (
-          <div className="mb-5">
+          <div className="no-print mb-5">
             <DiscountFields
               discountType={discountType}
               discountValue={discountValue}
@@ -260,7 +364,7 @@ export function BillingPage() {
           </div>
         )}
         <BillTotals
-          className="ml-auto mt-6 max-w-sm"
+          className="bill-totals ml-auto mt-6 max-w-sm"
           subtotal={order.subtotal}
           discount={order.discount}
           discountReason={order.discountReason}
@@ -272,8 +376,14 @@ export function BillingPage() {
           total={order.total}
           totalLabel={t("અંતિમ રકમ", "Final amount")}
         />
+        <div className="mt-6 border-t border-dashed border-gray-300 pt-4 text-center text-xs text-gray-500 dark:border-white/20">
+          <p className="font-bold text-gray-700 dark:text-gray-200">
+            {t("Thank you. Please visit again.", "Thank you. Please visit again.")}
+          </p>
+          <p className="mt-1">{t("Powered by BillMitara", "Powered by BillMitara")}</p>
+        </div>
       </div>
-      <aside className="glass h-fit rounded-lg p-5">
+      <aside className="no-print glass h-fit rounded-lg p-5">
         <h2 className="text-xl font-black">{t("બિલ ક્રિયાઓ", "Bill actions")}</h2>
         <p className="mt-2 text-sm text-gray-500">
           {t("PDF અને WhatsApp બિલ બનાવવા પહેલાં પેમેન્ટ અને મોબાઇલ નંબર જરૂરી છે.", "Payment and mobile number are required before PDF and WhatsApp bill generation.")}

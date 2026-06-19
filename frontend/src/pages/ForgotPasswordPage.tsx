@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { ArrowLeft, KeyRound, Mail, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -8,12 +8,17 @@ import { LanguageSelector } from '../components/LanguageSelector';
 import { PasswordInput } from '../components/PasswordInput';
 import { useLanguage } from '../context/LanguageContext';
 
+const RESEND_SECONDS = 60;
+
 const emailSchema = yup.object({
   email: yup.string().trim().email('Enter a valid email address').required('Email is required')
 });
 
-const resetSchema = yup.object({
-  otp: yup.string().matches(/^\d{6}$/, 'Enter the 6-digit OTP').required('OTP is required'),
+const otpSchema = yup.object({
+  otp: yup.string().matches(/^\d{6}$/, 'Enter the 6-digit OTP').required('OTP is required')
+});
+
+const passwordSchema = yup.object({
   newPassword: yup.string().min(8, 'Password must be at least 8 characters').required('New password is required'),
   confirmPassword: yup
     .string()
@@ -24,27 +29,63 @@ const resetSchema = yup.object({
 export function ForgotPasswordPage() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [step, setStep] = useState<'email' | 'reset'>('email');
+  const [step, setStep] = useState<'email' | 'otp' | 'reset'>('email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [resetToken, setResetToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [resendSeconds, setResendSeconds] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  async function requestOtp(event: FormEvent) {
-    event.preventDefault();
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setTimeout(() => setResendSeconds((value) => value - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendSeconds]);
+
+  async function requestOtp(event?: FormEvent) {
+    event?.preventDefault();
     setLoading(true);
     try {
       const values = await emailSchema.validate({ email });
       const { data } = await api.post('/auth/forgot-password', values);
       setEmail(values.email);
+      setOtp('');
+      setResetToken('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setStep('otp');
+      setResendSeconds(RESEND_SECONDS);
+      toast.success(data.message);
+    } catch (error: any) {
+      toast.error(
+        error.name === 'ValidationError'
+          ? error.message
+          : error.response?.data?.message || t('Could not send OTP', 'Could not send OTP')
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verifyOtp(event: FormEvent) {
+    event.preventDefault();
+    setLoading(true);
+    try {
+      const values = await otpSchema.validate({ otp });
+      const { data } = await api.post('/auth/verify-reset-otp', {
+        email,
+        otp: values.otp
+      });
+      setResetToken(data.resetToken);
       setStep('reset');
       toast.success(data.message);
     } catch (error: any) {
       toast.error(
         error.name === 'ValidationError'
           ? error.message
-          : error.response?.data?.message || t('OTP મોકલી શકાયો નહીં', 'Could not send OTP')
+          : error.response?.data?.message || t('Could not verify OTP', 'Could not verify OTP')
       );
     } finally {
       setLoading(false);
@@ -53,15 +94,20 @@ export function ForgotPasswordPage() {
 
   async function resetPassword(event: FormEvent) {
     event.preventDefault();
+    if (!resetToken) {
+      setStep('otp');
+      toast.error(t('Verify the OTP first', 'Verify the OTP first'));
+      return;
+    }
+
     setLoading(true);
     try {
-      const values = await resetSchema.validate(
-        { otp, newPassword, confirmPassword },
+      const values = await passwordSchema.validate(
+        { newPassword, confirmPassword },
         { abortEarly: false }
       );
       const { data } = await api.post('/auth/reset-password', {
-        email,
-        otp: values.otp,
+        resetToken,
         newPassword: values.newPassword
       });
       toast.success(data.message);
@@ -70,11 +116,18 @@ export function ForgotPasswordPage() {
       toast.error(
         error.name === 'ValidationError'
           ? error.errors[0]
-          : error.response?.data?.message || t('પાસવર્ડ રીસેટ થઈ શક્યો નહીં', 'Could not reset password')
+          : error.response?.data?.message || t('Could not reset password', 'Could not reset password')
       );
     } finally {
       setLoading(false);
     }
+  }
+
+  function changeEmail() {
+    setStep('email');
+    setOtp('');
+    setResetToken('');
+    setResendSeconds(0);
   }
 
   return (
@@ -83,37 +136,35 @@ export function ForgotPasswordPage() {
       <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-white p-6 shadow-2xl dark:bg-slate-900 sm:p-8">
         <div className="mb-6 flex items-center justify-between">
           <Link to="/login" className="btn-soft">
-            <ArrowLeft size={17} /> {t('લૉગિન', 'Login')}
+            <ArrowLeft size={17} /> {t('Login', 'Login')}
           </Link>
           <LanguageSelector />
         </div>
 
         <div className="mb-7">
           <div className="mb-4 grid size-14 place-items-center rounded-2xl bg-teal-50 text-teal-700">
-            {step === 'email' ? <Mail size={26} /> : <ShieldCheck size={26} />}
+            {step === 'email' ? <Mail size={26} /> : step === 'otp' ? <ShieldCheck size={26} /> : <KeyRound size={26} />}
           </div>
           <h1 className="text-3xl font-black">
             {step === 'email'
-              ? t('પાસવર્ડ ભૂલી ગયા?', 'Forgot password?')
-              : t('તમારો OTP દાખલ કરો', 'Enter your OTP')}
+              ? t('Forgot password?', 'Forgot password?')
+              : step === 'otp'
+                ? t('Verify OTP', 'Verify OTP')
+                : t('Reset password', 'Reset password')}
           </h1>
           <p className="mt-2 text-sm leading-6 text-gray-500">
             {step === 'email'
-              ? t(
-                  'તમારા એકાઉન્ટનો ઇમેઇલ દાખલ કરો. અમે Gmail પર છ અંકનો OTP મોકલીશું.',
-                  'Enter the email linked to your account. We will send a six-digit OTP to your Gmail inbox.'
-                )
-              : t(
-                  `${email} પર મોકલેલો OTP દાખલ કરો. કોડ 10 મિનિટમાં સમાપ્ત થશે.`,
-                  `Enter the OTP sent to ${email}. The code expires in 10 minutes.`
-                )}
+              ? t('Enter your account email. We will send a six-digit OTP.', 'Enter your account email. We will send a six-digit OTP.')
+              : step === 'otp'
+                ? t(`Enter the OTP sent to ${email}.`, `Enter the OTP sent to ${email}.`)
+                : t('OTP verified. Create your new password.', 'OTP verified. Create your new password.')}
           </p>
         </div>
 
         {step === 'email' ? (
           <form onSubmit={requestOtp} className="space-y-5">
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{t('ઇમેઇલ', 'Email address')}</span>
+              <span className="mb-2 block text-sm font-bold">{t('Email address', 'Email address')}</span>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
@@ -130,13 +181,13 @@ export function ForgotPasswordPage() {
             </label>
             <button className="btn-primary h-12 w-full" disabled={loading}>
               <Mail size={18} />
-              {loading ? t('મોકલી રહ્યા છીએ...', 'Sending...') : t('OTP મોકલો', 'Send OTP')}
+              {loading ? t('Sending...', 'Sending...') : t('Send OTP', 'Send OTP')}
             </button>
           </form>
-        ) : (
-          <form onSubmit={resetPassword} className="space-y-4">
+        ) : step === 'otp' ? (
+          <form onSubmit={verifyOtp} className="space-y-4">
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{t('છ અંકનો OTP', 'Six-digit OTP')}</span>
+              <span className="mb-2 block text-sm font-bold">{t('Six-digit OTP', 'Six-digit OTP')}</span>
               <input
                 className="input h-14 text-center text-2xl font-black tracking-[0.45em]"
                 value={otp}
@@ -148,8 +199,28 @@ export function ForgotPasswordPage() {
                 required
               />
             </label>
+            <button className="btn-primary h-12 w-full" disabled={loading}>
+              <ShieldCheck size={18} />
+              {loading ? t('Verifying...', 'Verifying...') : t('Verify OTP', 'Verify OTP')}
+            </button>
+            <button
+              type="button"
+              className="btn-soft w-full"
+              onClick={() => requestOtp()}
+              disabled={loading || resendSeconds > 0}
+            >
+              {resendSeconds > 0
+                ? t(`Send code again in ${resendSeconds}s`, `Send code again in ${resendSeconds}s`)
+                : t('Send code again', 'Send code again')}
+            </button>
+            <button type="button" className="w-full text-sm font-bold text-teal-700 hover:underline" onClick={changeEmail} disabled={loading}>
+              {t('Change email address', 'Change email address')}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={resetPassword} className="space-y-4">
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{t('નવો પાસવર્ડ', 'New password')}</span>
+              <span className="mb-2 block text-sm font-bold">{t('New password', 'New password')}</span>
               <PasswordInput
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
@@ -159,7 +230,7 @@ export function ForgotPasswordPage() {
               />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{t('પાસવર્ડની પુષ્ટિ કરો', 'Confirm password')}</span>
+              <span className="mb-2 block text-sm font-bold">{t('Confirm password', 'Confirm password')}</span>
               <PasswordInput
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
@@ -170,18 +241,10 @@ export function ForgotPasswordPage() {
             </label>
             <button className="btn-primary h-12 w-full" disabled={loading}>
               <KeyRound size={18} />
-              {loading ? t('રીસેટ થઈ રહ્યું છે...', 'Resetting...') : t('પાસવર્ડ રીસેટ કરો', 'Reset password')}
+              {loading ? t('Resetting...', 'Resetting...') : t('Reset password', 'Reset password')}
             </button>
-            <button
-              type="button"
-              className="btn-soft w-full"
-              onClick={() => {
-                setStep('email');
-                setOtp('');
-              }}
-              disabled={loading}
-            >
-              {t('ઇમેઇલ બદલો અથવા OTP ફરી મોકલો', 'Change email or resend OTP')}
+            <button type="button" className="btn-soft w-full" onClick={() => setStep('otp')} disabled={loading}>
+              {t('Verify a different OTP', 'Verify a different OTP')}
             </button>
           </form>
         )}

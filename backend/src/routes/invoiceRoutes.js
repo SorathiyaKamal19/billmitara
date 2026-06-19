@@ -3,9 +3,9 @@ import { createInvoice, exportInvoicesExcel, getInvoicePdf, listInvoices, update
 import { authorize, protect } from '../middleware/auth.js';
 
 export const invoiceRoutes = Router();
+invoiceRoutes.get('/:id/pdf', getInvoicePdf);
 invoiceRoutes.use(protect);
 invoiceRoutes.get('/', authorize('owner', 'manager'), listInvoices);
 invoiceRoutes.get('/export.xlsx', authorize('owner'), exportInvoicesExcel);
 invoiceRoutes.post('/order/:orderId', authorize('owner', 'manager'), createInvoice);
-invoiceRoutes.get('/:id/pdf', authorize('owner', 'manager'), getInvoicePdf);
 invoiceRoutes.patch('/:id', authorize('owner'), updateFinalizedInvoice);

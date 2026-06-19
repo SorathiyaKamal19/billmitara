@@ -7,7 +7,8 @@ import {
   registerOwner,
   requestPasswordReset,
   resetPassword,
-  updateProfile
+  updateProfile,
+  verifyResetOtp
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -44,6 +45,7 @@ const passwordResetSubmitLimiter = rateLimit({
 authRoutes.post('/login', loginLimiter, login);
 authRoutes.post('/register-owner', registerOwnerLimiter, registerOwner);
 authRoutes.post('/forgot-password', passwordResetRequestLimiter, requestPasswordReset);
+authRoutes.post('/verify-reset-otp', passwordResetSubmitLimiter, verifyResetOtp);
 authRoutes.post('/reset-password', passwordResetSubmitLimiter, resetPassword);
 authRoutes.get('/me', protect, me);
 authRoutes.patch('/profile', protect, updateProfile);
