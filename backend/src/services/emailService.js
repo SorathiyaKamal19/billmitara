@@ -1,41 +1,46 @@
-import nodemailer from 'nodemailer';
-import { env } from '../config/env.js';
-import { ApiError } from '../utils/apiError.js';
-
+import nodemailer from "nodemailer";
+import { env } from "../config/env.js";
+import { ApiError } from "../utils/apiError.js";
+import dns from "dns";
 let transporter;
+dns.setDefaultResultOrder("ipv4first");
 
 function getTransporter() {
   if (!env.mail.user || !env.mail.appPassword) {
-    throw new ApiError(503, 'Password reset email is not configured');
+    throw new ApiError(503, "Password reset email is not configured");
   }
 
   if (!transporter) {
     transporter = nodemailer.createTransport({
       host: env.mail.host,
-      port: env.mail.port,
-      secure: env.mail.secure,
+      port: Number(env.mail.port),
+      secure: env.mail.secure === true || env.mail.secure === "true",
       auth: {
         user: env.mail.user,
-        pass: env.mail.appPassword
-      }
+        pass: env.mail.appPassword,
+      },
     });
   }
 
   return transporter;
 }
 
-function escapeHtml(value = '') {
-  return value.replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  })[character]);
+function escapeHtml(value = "") {
+  return value.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      })[character],
+  );
 }
 
 export async function sendPasswordResetOtp({ email, name, otp }) {
-  const safeName = escapeHtml(name || 'there');
+  const safeName = escapeHtml(name || "there");
   const minutes = env.passwordReset.otpMinutes;
 
   try {
@@ -43,7 +48,7 @@ export async function sendPasswordResetOtp({ email, name, otp }) {
       from: env.mail.from,
       to: email,
       subject: `${otp} is your BillMitara password reset code`,
-      text: `Hello ${name || 'there'}, your BillMitara password reset code is ${otp}. It expires in ${minutes} minutes. If you did not request this, ignore this email.`,
+      text: `Hello ${name || "there"}, your BillMitara password reset code is ${otp}. It expires in ${minutes} minutes. If you did not request this, ignore this email.`,
       html: `
         <div style="background:#f8fafc;padding:32px;font-family:Arial,sans-serif;color:#0f172a">
           <div style="max-width:520px;margin:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:32px">
@@ -54,17 +59,17 @@ export async function sendPasswordResetOtp({ email, name, otp }) {
             <p style="color:#475569;line-height:1.6">This code expires in ${minutes} minutes. If you did not request a password reset, you can safely ignore this email.</p>
           </div>
         </div>
-      `
+      `,
     });
   } catch (error) {
-    console.error('Password reset email failed:', {
+    console.error("Password reset email failed:", {
       message: error.message,
       code: error.code,
       command: error.command,
       responseCode: error.responseCode,
-      response: error.response
+      response: error.response,
     });
     if (error instanceof ApiError) throw error;
-    throw new ApiError(502, 'Could not send password reset email');
+    throw new ApiError(502, "Could not send password reset email");
   }
 }
