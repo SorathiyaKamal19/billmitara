@@ -20,6 +20,12 @@ function getTransporter() {
         pass: env.mail.appPassword,
       },
     });
+    console.log("SMTP CONFIG", {
+      host: env.mail.host,
+      port: env.mail.port,
+      secure: env.mail.secure,
+      user: env.mail.user,
+    });
   }
 
   return transporter;
