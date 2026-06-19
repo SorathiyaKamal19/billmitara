@@ -78,6 +78,8 @@ TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 PUBLIC_API_URL=https://your-api-domain.com
 ```
 
+If Twilio returns `Twilio could not find a Channel with the specified From address`, the sender in `TWILIO_WHATSAPP_FROM` is not available on the Twilio account being used. For sandbox testing, keep `TWILIO_WHATSAPP_FROM=whatsapp:+14155238886`, enable the WhatsApp Sandbox on the same account as `TWILIO_ACCOUNT_SID`, and have the recipient join that sandbox before sending. For production, replace the sandbox number with your approved WhatsApp sender from Twilio, including the `whatsapp:` prefix.
+
 ## Gmail OTP Password Reset
 
 Forgot-password emails are sent through Gmail SMTP. The OTP is six digits, stored as a hash, expires after 10 minutes, and is removed after a successful reset.
@@ -111,6 +113,8 @@ JWT_SECRET=use-a-long-random-production-secret
 JWT_EXPIRES_IN=7d
 CLIENT_ORIGIN=https://your-frontend-domain.com
 PUBLIC_API_URL=https://your-backend-domain.com
+KEEP_ALIVE_ENABLED=true
+KEEP_ALIVE_INTERVAL_MINUTES=9
 GMAIL_USER=your-account@gmail.com
 GMAIL_APP_PASSWORD=your-google-app-password
 MAIL_FROM=BillMitara <your-account@gmail.com>
@@ -130,6 +134,8 @@ npm run start
 ```
 
 The backend health endpoint is `GET /api/health`. Ensure the deployment platform allows outbound SMTP connections to Gmail and that `CLIENT_ORIGIN` exactly matches the deployed frontend origin.
+
+For Render free instances, enable the keep-alive cron with `KEEP_ALIVE_ENABLED=true`. It pings `PUBLIC_API_URL/api/health` every 9 minutes by default, which keeps the idle gap below 10 minutes. If your health URL is different, set `KEEP_ALIVE_URL=https://your-backend-domain.com/api/health`.
 
 ## Verification
 

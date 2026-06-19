@@ -2,6 +2,16 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+function booleanEnv(value, defaultValue = false) {
+  if (value === undefined) return defaultValue;
+  return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
+
+function numberEnv(value, defaultValue) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
 export const env = {
   port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -27,6 +37,11 @@ export const env = {
     accountSid: process.env.TWILIO_ACCOUNT_SID,
     authToken: process.env.TWILIO_AUTH_TOKEN,
     from: process.env.TWILIO_WHATSAPP_FROM
+  },
+  keepAlive: {
+    enabled: booleanEnv(process.env.KEEP_ALIVE_ENABLED),
+    url: process.env.KEEP_ALIVE_URL,
+    intervalMinutes: numberEnv(process.env.KEEP_ALIVE_INTERVAL_MINUTES, 9)
   },
   seed: {
     ownerEmail: process.env.SEED_OWNER_EMAIL || 'owner@poss.local',

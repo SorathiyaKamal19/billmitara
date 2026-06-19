@@ -13,11 +13,27 @@ function formatINR(value) {
 }
 
 function formatBillDate(value) {
-  return new Intl.DateTimeFormat('en-IN', {
-    dateStyle: 'medium',
-    timeStyle: 'medium',
+  const date = new Date(value);
+  const datePart = new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
     timeZone: 'Asia/Kolkata'
-  }).format(new Date(value));
+  }).format(date);
+  const timePart = new Intl.DateTimeFormat('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Kolkata'
+  }).format(date);
+  return `${datePart}, ${timePart}`;
+}
+
+function paymentLabel(value) {
+  if (value === 'upi') return 'UPI';
+  if (value === 'card') return 'Card';
+  if (value === 'partial') return 'Partial';
+  return 'Cash';
 }
 
 async function nextBillNumber(restaurant) {
@@ -33,50 +49,86 @@ export async function buildInvoicePdfBuffer(invoice, order, restaurant) {
     doc.on('data', (chunk) => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
 
-    const left = 36;
-    const right = 559;
+    const left = 42;
+    const right = 553;
+    const width = right - left;
     const orderType = order.type === 'takeaway' ? 'Parcel order' : 'Dine-in order';
 
-    doc.rect(left, 32, right - left, 84).fill('#111827');
-    doc.fillColor('#ffffff').fontSize(22).font('Helvetica-Bold').text(restaurant.name, left + 18, 48, { width: 320 });
-    doc.fontSize(9).font('Helvetica').fillColor('#d1d5db').text(restaurant.address || 'Restaurant POS', left + 18, 76, { width: 320 });
-    if (restaurant.phone) doc.text(`Phone: ${restaurant.phone}`, left + 18, 90, { width: 320 });
-    doc.fillColor('#ffffff').fontSize(11).font('Helvetica-Bold').text('TAX INVOICE', 410, 50, { width: 110, align: 'right' });
-    doc.fontSize(9).font('Helvetica').fillColor('#d1d5db').text(invoice.billNumber, 360, 70, { width: 160, align: 'right' });
-    if (invoice.gstEnabled && restaurant.gstNumber) doc.text(`GSTIN: ${restaurant.gstNumber}`, 340, 88, { width: 180, align: 'right' });
+    doc.roundedRect(left, 36, width, 92, 6).fill('#111827');
+    doc.fillColor('#ffffff').fontSize(22).font('Helvetica-Bold').text(restaurant.name, left + 22, 58, { width: 300 });
+    doc.fontSize(9).font('Helvetica').fillColor('#d1d5db').text(restaurant.address || 'Restaurant POS', left + 22, 86, { width: 300 });
+    if (restaurant.phone) doc.text(`Phone: ${restaurant.phone}`, left + 22, 101, { width: 300 });
+    doc.fillColor('#ffffff').fontSize(13).font('Helvetica-Bold').text('TAX INVOICE', right - 190, 58, { width: 168, align: 'right' });
+    doc.fontSize(9).font('Helvetica').fillColor('#d1d5db').text(invoice.billNumber, right - 190, 82, { width: 168, align: 'right' });
+    if (invoice.gstEnabled && restaurant.gstNumber) {
+      doc.text(`GSTIN: ${restaurant.gstNumber}`, right - 190, 98, { width: 168, align: 'right' });
+    }
     doc.fillColor('#111827');
 
-    doc.y = 136;
-    doc.fontSize(10).font('Helvetica-Bold').text('Bill details', left, doc.y);
-    doc.font('Helvetica').fontSize(9);
-    doc.text(`Date: ${formatBillDate(invoice.createdAt)}`, left, doc.y + 8);
-    doc.text(`Order: ${orderType}${order.tableName ? ` / ${order.tableName}` : ''}`, left, doc.y + 22);
-    doc.text(`Payment: ${invoice.paymentMode || 'cash'}`, left, doc.y + 36);
-    doc.font('Helvetica-Bold').text('Customer', 350, 136);
-    doc.font('Helvetica').text(invoice.customerName || 'Walk-in', 350, 157, { width: 170 });
-    doc.text(`Mobile: ${invoice.customerMobile || '-'}`, 350, 171, { width: 170 });
-    doc.moveDown(3.2);
+    const detailsTop = 152;
+    const boxGap = 18;
+    const boxWidth = (width - boxGap) / 2;
+    doc.roundedRect(left, detailsTop, boxWidth, 88, 6).strokeColor('#e5e7eb').lineWidth(1).stroke();
+    doc.roundedRect(left + boxWidth + boxGap, detailsTop, boxWidth, 88, 6).stroke();
 
-    const tableTop = doc.y;
-    doc.roundedRect(left, tableTop, right - left, 24, 4).fill('#f3f4f6');
-    doc.fillColor('#111827').font('Helvetica-Bold').fontSize(10);
-    doc.text('Item', left + 10, tableTop + 7, { width: 230 });
-    doc.text('Qty', 290, tableTop + 7, { width: 40, align: 'right' });
-    doc.text('Rate', 350, tableTop + 7, { width: 70, align: 'right' });
-    doc.text('Amount', 460, tableTop + 7, { width: 80, align: 'right' });
-    doc.y = tableTop + 34;
+    const customerX = left + 14;
+    const billX = left + boxWidth + boxGap + 14;
+    const lineValue = (label, value, x, y, labelWidth = 52) => {
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#111827').text(label, x, y, { width: labelWidth });
+      doc.font('Helvetica-Bold').fillColor('#374151').text(value, x + labelWidth, y, { width: boxWidth - labelWidth - 28 });
+    };
+
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#111827').text('Customer Details', customerX, detailsTop + 13);
+    lineValue('Name:', invoice.customerName || 'Walk-in', customerX, detailsTop + 38);
+    lineValue('Mobile:', invoice.customerMobile || '-', customerX, detailsTop + 56);
+
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#111827').text('Bill Details', billX, detailsTop + 13);
+    lineValue('Date:', formatBillDate(invoice.finalizedAt || invoice.createdAt), billX, detailsTop + 38);
+    lineValue('Order:', `${orderType}${order.tableName ? ` / ${order.tableName}` : ''}`, billX, detailsTop + 56);
+    lineValue('Pay:', paymentLabel(invoice.paymentMode), billX, detailsTop + 74);
+
+    const tableColumns = {
+      item: left + 14,
+      qty: left + 304,
+      rate: left + 364,
+      amount: left + 440
+    };
+    const tableWidths = {
+      item: 270,
+      qty: 38,
+      rate: 72,
+      amount: 58
+    };
+    const drawTableHeader = (y) => {
+      doc.roundedRect(left, y, width, 28, 5).fill('#f3f4f6');
+      doc.fillColor('#111827').font('Helvetica-Bold').fontSize(9);
+      doc.text('Item', tableColumns.item, y + 9, { width: tableWidths.item });
+      doc.text('Qty', tableColumns.qty, y + 9, { width: tableWidths.qty, align: 'right' });
+      doc.text('Rate', tableColumns.rate, y + 9, { width: tableWidths.rate, align: 'right' });
+      doc.text('Amount', tableColumns.amount, y + 9, { width: tableWidths.amount, align: 'right' });
+    };
+
+    let rowY = 268;
+    drawTableHeader(rowY);
+    rowY += 38;
 
     order.items.forEach((item) => {
-      const y = doc.y;
-      doc.font('Helvetica').fontSize(10).fillColor('#111827').text(item.name, left + 10, y, { width: 230 });
-      doc.text(String(item.quantity), 290, y, { width: 40, align: 'right' });
-      doc.text(formatINR(item.price), 350, y, { width: 70, align: 'right' });
-      doc.font('Helvetica-Bold').text(formatINR(item.price * item.quantity), 460, y, { width: 80, align: 'right' });
-      doc.moveTo(left, y + 20).lineTo(right, y + 20).strokeColor('#e5e7eb').stroke();
-      doc.y = y + 28;
+      const itemHeight = doc.font('Helvetica').fontSize(10).heightOfString(item.name, { width: tableWidths.item });
+      const rowHeight = Math.max(30, itemHeight + 16);
+      if (rowY + rowHeight > 690) {
+        doc.addPage();
+        rowY = 54;
+        drawTableHeader(rowY);
+        rowY += 38;
+      }
+      doc.fillColor('#111827').font('Helvetica').fontSize(10).text(item.name, tableColumns.item, rowY + 7, { width: tableWidths.item });
+      doc.text(String(item.quantity), tableColumns.qty, rowY + 7, { width: tableWidths.qty, align: 'right' });
+      doc.text(formatINR(item.price), tableColumns.rate, rowY + 7, { width: tableWidths.rate, align: 'right' });
+      doc.font('Helvetica-Bold').text(formatINR(item.price * item.quantity), tableColumns.amount, rowY + 7, { width: tableWidths.amount, align: 'right' });
+      doc.moveTo(left, rowY + rowHeight).lineTo(right, rowY + rowHeight).strokeColor('#e5e7eb').lineWidth(1).stroke();
+      rowY += rowHeight;
     });
 
-    doc.moveDown();
     const totals = [
       ['Subtotal', invoice.subtotal],
       ...(invoice.discount > 0 ? [[`Discount${invoice.discountReason ? ` (${invoice.discountReason})` : ''}`, -invoice.discount]] : []),
@@ -85,16 +137,26 @@ export async function buildInvoicePdfBuffer(invoice, order, restaurant) {
       ...(invoice.roundOff ? [['Round Off', invoice.roundOff]] : []),
       ['Grand Total', invoice.total]
     ];
+    let totalsTop = Math.max(rowY + 26, 430);
+    const totalsBlockHeight = totals.length * 20 + 74;
+    if (totalsTop + totalsBlockHeight > 760) {
+      doc.addPage();
+      totalsTop = 54;
+    }
+    const totalsLeft = right - 220;
+    const totalRowHeight = 20;
     totals.forEach(([label, value], index) => {
       const isTotal = index === totals.length - 1;
-      if (isTotal) doc.moveTo(340, doc.y).lineTo(540, doc.y).strokeColor('#111827').stroke();
-      doc.font(isTotal ? 'Helvetica-Bold' : 'Helvetica').fontSize(isTotal ? 14 : 10);
-      doc.text(label, 340, doc.y + (isTotal ? 8 : 0), { width: 100 });
-      doc.text(formatINR(value), 460, doc.y - (isTotal ? 17 : 12), { width: 80, align: 'right' });
+      const y = totalsTop + index * totalRowHeight + (isTotal ? 8 : 0);
+      if (isTotal) doc.moveTo(totalsLeft, y - 8).lineTo(right, y - 8).strokeColor('#111827').lineWidth(1).stroke();
+      doc.fillColor('#111827').font(isTotal ? 'Helvetica-Bold' : 'Helvetica').fontSize(isTotal ? 13 : 10);
+      doc.text(label, totalsLeft, y, { width: 112 });
+      doc.text(formatINR(value), totalsLeft + 112, y, { width: 108, align: 'right' });
     });
-    doc.moveDown(2);
-    doc.font('Helvetica').fontSize(9).fillColor('#6b7280').text('This is a computer generated bill.', { align: 'center' });
-    doc.font('Helvetica-Bold').fontSize(10).fillColor('#111827').text('Thank you for visiting. Visit again!', { align: 'center' });
+    const noteTop = totalsTop + totals.length * totalRowHeight + 38;
+    doc.font('Helvetica').fontSize(9).fillColor('#6b7280').text('This is a computer generated bill.', left, noteTop, { width, align: 'center' });
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#111827').text('Thank you for visiting. Visit again!', left, noteTop + 18, { width, align: 'center' });
+    doc.font('Helvetica').fontSize(8).fillColor('#6b7280').text('Powered by BillMitara', left, noteTop + 36, { width, align: 'center' });
     doc.end();
   });
 }

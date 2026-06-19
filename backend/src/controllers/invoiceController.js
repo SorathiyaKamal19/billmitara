@@ -7,6 +7,15 @@ import { ApiError } from '../utils/apiError.js';
 import { createInvoiceForOrder, buildInvoicePdfBuffer } from '../services/invoiceService.js';
 import { calculateOrderTotals } from '../utils/tax.js';
 
+function pdfFileName(restaurant, invoice) {
+  const restaurantName = restaurant.name || 'Restaurant';
+  const safeName = `${restaurantName}-BillMitara-${invoice.billNumber}`
+    .replace(/[^a-z0-9-]+/gi, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return `${safeName || invoice.billNumber}.pdf`;
+}
+
 export const createInvoice = asyncHandler(async (req, res) => {
   const order = await Order.findOne({ _id: req.params.orderId, restaurant: req.user.restaurant });
   if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -31,14 +40,16 @@ export const createInvoice = asyncHandler(async (req, res) => {
 });
 
 export const getInvoicePdf = asyncHandler(async (req, res) => {
-  const invoice = await Invoice.findOne({ _id: req.params.id, restaurant: req.user.restaurant });
+  const invoiceQuery = { _id: req.params.id };
+  if (req.user?.restaurant) invoiceQuery.restaurant = req.user.restaurant;
+  const invoice = await Invoice.findOne(invoiceQuery);
   if (!invoice) throw new ApiError(404, 'Invoice not found');
   const order = await Order.findById(invoice.order);
   const restaurant = await Restaurant.findById(invoice.restaurant);
   if (!order || !restaurant) throw new ApiError(404, 'Invoice data not found');
   const pdf = await buildInvoicePdfBuffer(invoice, order, restaurant);
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `inline; filename="${invoice.billNumber}.pdf"`);
+  res.setHeader('Content-Disposition', `attachment; filename="${pdfFileName(restaurant, invoice)}"`);
   res.send(pdf);
 });
 
