@@ -19,6 +19,10 @@ function getTransporter() {
         user: env.mail.user,
         pass: env.mail.appPassword,
       },
+
+      lookup(hostname, options, callback) {
+        return dns.lookup(hostname, { family: 4 }, callback);
+      },
     });
     console.log("SMTP CONFIG", {
       host: env.mail.host,
