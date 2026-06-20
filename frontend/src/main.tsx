@@ -13,6 +13,7 @@ import { KitchenPage } from './pages/KitchenPage';
 import { LoginPage } from './pages/LoginPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { MenuPage } from './pages/MenuPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 import { OrderPage } from './pages/OrderPage';
 import { OrderDetailsPage } from './pages/OrderDetailsPage';
 import { ParcelPage } from './pages/ParcelPage';
@@ -62,6 +63,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/qr-menu" element={<ProtectedRoute roles={['owner', 'manager']}><QrMenuPage /></ProtectedRoute>} />
             </Route>
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </BrowserRouter>
         <Toaster position="top-right" />
