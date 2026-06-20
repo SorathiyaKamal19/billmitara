@@ -5,6 +5,7 @@ import * as yup from 'yup';
 import { api } from '../api/client';
 import { Role, User } from '../types';
 import { PasswordInput } from '../components/PasswordInput';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 type StaffRole = Exclude<Role, 'owner'>;
 
@@ -36,6 +37,8 @@ export function StaffPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const editing = useMemo(() => staff.find((user) => user._id === editingId), [editingId, staff]);
 
@@ -104,15 +107,19 @@ export function StaffPage() {
     }
   }
 
-  async function removeUser(user: User) {
-    if (!window.confirm(`Delete ${user.name}'s staff account?`)) return;
+  async function removeUser() {
+    if (!userToDelete) return;
+    setDeleting(true);
     try {
-      await api.delete(`/staff/${user._id}`);
-      setStaff((current) => current.filter((row) => row._id !== user._id));
+      await api.delete(`/staff/${userToDelete._id}`);
+      setStaff((current) => current.filter((row) => row._id !== userToDelete._id));
       toast.success('Staff account deleted');
-      if (editingId === user._id) resetForm();
+      if (editingId === userToDelete._id) resetForm();
+      setUserToDelete(null);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Could not delete staff account');
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -205,7 +212,7 @@ export function StaffPage() {
                   <button className="btn-soft" onClick={() => editUser(user)}>
                     <Edit3 size={17} />
                   </button>
-                  <button className="btn-soft text-red-600" onClick={() => removeUser(user)}>
+                  <button className="btn-soft text-red-600" onClick={() => setUserToDelete(user)}>
                     <Trash2 size={17} />
                   </button>
                 </div>
@@ -220,6 +227,23 @@ export function StaffPage() {
           </div>
         </div>
       </div>
+      {userToDelete && (
+        <ConfirmDialog
+          title="Delete staff account?"
+          description={
+            <>
+              <p className="font-bold text-gray-950 dark:text-white">{userToDelete.name}</p>
+              <p className="mt-2">This staff member will no longer be able to sign in.</p>
+            </>
+          }
+          confirmLabel="Delete"
+          loadingLabel="Deleting..."
+          loading={deleting}
+          danger
+          onConfirm={removeUser}
+          onClose={() => setUserToDelete(null)}
+        />
+      )}
     </div>
   );
 }

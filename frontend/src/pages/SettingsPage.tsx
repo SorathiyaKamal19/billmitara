@@ -488,8 +488,8 @@ export function SettingsPage() {
       {/* MODAL */}
 
       {showGSTModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="glass w-full max-w-md rounded-3xl p-6 shadow-2xl">
+        <div className="fixed inset-0 left-0 top-0 z-[100] grid h-dvh w-screen place-items-center overflow-y-auto bg-gray-950/70 p-4 backdrop-blur-xl" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-lg border border-white/70 bg-white p-5 shadow-2xl ring-1 ring-gray-950/5 dark:border-white/10 dark:bg-gray-950 dark:ring-white/10">
             <div className="flex items-start gap-4">
               <div className="rounded-2xl bg-saffron/10 p-3 text-saffron">
                 <ShieldAlert size={26} />

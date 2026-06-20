@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export function formatElapsed(ms: number) {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
@@ -11,19 +11,32 @@ export function formatElapsed(ms: number) {
   return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-export function useElapsedTime(since: string | undefined) {
+function parseTime(value: string | Date | undefined) {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : null;
+}
+
+export function useElapsedTime(since: string | Date | undefined) {
+  const start = useMemo(() => parseTime(since), [since]);
   const [elapsed, setElapsed] = useState('00:00');
 
   useEffect(() => {
-    if (!since) return;
-    const start = new Date(since).getTime();
-    function tick() {
-      setElapsed(formatElapsed(Date.now() - start));
+    if (!start) {
+      setElapsed('00:00');
+      return;
     }
+
+    const startTime = start;
+
+    function tick() {
+      setElapsed(formatElapsed(Date.now() - startTime));
+    }
+
     tick();
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
-  }, [since]);
+  }, [start]);
 
   return elapsed;
 }

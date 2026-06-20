@@ -97,6 +97,7 @@ export interface Invoice {
   total: number;
   pdfUrl?: string;
   whatsappStatus: string;
+  whatsappReason?: string;
   paymentMode?: 'cash' | 'upi' | 'partial';
   payments?: { method: 'cash' | 'upi'; amount: number }[];
   createdAt: string;
