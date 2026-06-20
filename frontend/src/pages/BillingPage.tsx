@@ -122,7 +122,10 @@ export function BillingPage() {
       });
       setInvoice(data);
       setShowPayment(false);
-      toast.success(`${t("બિલ બન્યું", "Bill generated")}. WhatsApp: ${data.whatsappStatus}`);
+      const whatsappMessage = data.whatsappStatus === "failed" && data.whatsappReason
+        ? `WhatsApp failed: ${data.whatsappReason}`
+        : `WhatsApp: ${data.whatsappStatus}`;
+      toast.success(`${t("બિલ બન્યું", "Bill generated")}. ${whatsappMessage}`);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || t("બિલ બનાવી શકાયું નહીં", "Could not generate bill"));
     }
@@ -417,8 +420,8 @@ export function BillingPage() {
       </aside>
 
       {showPayment && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-          <div className="glass w-full max-w-md rounded-lg p-5">
+        <div className="fixed inset-0 left-0 top-0 z-[100] grid h-dvh w-screen place-items-center overflow-y-auto bg-gray-950/70 p-4 backdrop-blur-xl" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-lg border border-white/70 bg-white p-5 shadow-2xl ring-1 ring-gray-950/5 dark:border-white/10 dark:bg-gray-950 dark:ring-white/10">
             <h2 className="text-xl font-black">{t("પેમેન્ટ પુષ્ટિ કરો", "Confirm payment")}</h2>
             <p className="mt-1 text-sm text-gray-500">
               {t("પેમેન્ટ પુષ્ટિ પછી જ બિલ બનશે.", "Bill generates only after payment confirmation.")}
@@ -476,14 +479,14 @@ export function BillingPage() {
                 </p>
               </div>
             )}
-            <div className="mt-5 flex gap-2">
+            <div className="mt-5 flex flex-col-reverse gap-3 border-t border-gray-200 pt-4 dark:border-white/10 sm:flex-row sm:justify-end">
               <button
-                className="btn-soft flex-1"
+                className="btn-soft"
                 onClick={() => setShowPayment(false)}
               >
                 {t("રદ કરો", "Cancel")}
               </button>
-              <button className="btn-primary flex-1" onClick={bill}>
+              <button className="btn-primary" onClick={bill}>
                 {t("પુષ્ટિ કરો અને બિલ બનાવો", "Confirm & Bill")}
               </button>
             </div>

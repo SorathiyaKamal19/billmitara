@@ -249,9 +249,9 @@ export function MenuPage() {
       </div>
       {/* EDIT MODAL */}
       {editModal && editItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-          <div className="glass w-full max-w-lg rounded-2xl p-6 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
+        <div className="fixed inset-0 left-0 top-0 z-[100] grid h-dvh w-screen place-items-center overflow-y-auto bg-gray-950/70 p-4 backdrop-blur-xl" role="dialog" aria-modal="true">
+          <div className="w-full max-w-lg rounded-lg border border-white/70 bg-white p-5 shadow-2xl ring-1 ring-gray-950/5 dark:border-white/10 dark:bg-gray-950 dark:ring-white/10">
+            <div className="mb-5 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-white/10">
               <h2 className="text-2xl font-black">{t("મેનુ વસ્તુ સંપાદિત કરો", "Edit Menu Item")}</h2>
 
               <button className="btn-soft p-2" onClick={() => setEditModal(false)}>

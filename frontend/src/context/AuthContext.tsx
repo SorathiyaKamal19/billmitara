@@ -5,7 +5,7 @@ import { User } from '../types';
 interface AuthContextValue {
   user: User | null;
   token: string | null;
-  login: (identifier: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string, rememberMe?: boolean) => Promise<void>;
   registerOwner: (input: RegisterOwnerInput) => Promise<void>;
   updateUser: (user: User) => void;
   logout: () => void;
@@ -22,38 +22,65 @@ interface RegisterOwnerInput {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const TOKEN_KEY = 'poss_token';
+const USER_KEY = 'poss_user';
+
+function getStoredValue(key: string) {
+  return localStorage.getItem(key) ?? sessionStorage.getItem(key);
+}
+
+function clearStoredAuth() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(USER_KEY);
+}
+
+function saveAuth(token: string, user: User, rememberMe: boolean) {
+  clearStoredAuth();
+  const storage = rememberMe ? localStorage : sessionStorage;
+  storage.setItem(TOKEN_KEY, token);
+  storage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+function readStoredUser() {
+  const raw = getStoredValue(USER_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as User;
+  } catch {
+    clearStoredAuth();
+    return null;
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState(localStorage.getItem('poss_token'));
-  const [user, setUser] = useState<User | null>(() => {
-    const raw = localStorage.getItem('poss_user');
-    return raw ? JSON.parse(raw) : null;
-  });
+  const [token, setToken] = useState(getStoredValue(TOKEN_KEY));
+  const [user, setUser] = useState<User | null>(readStoredUser);
 
-  async function login(identifier: string, password: string) {
+  async function login(identifier: string, password: string, rememberMe = true) {
     const { data } = await api.post('/auth/login', { identifier, password });
-    localStorage.setItem('poss_token', data.token);
-    localStorage.setItem('poss_user', JSON.stringify(data.user));
+    localStorage.setItem('poss_remember_me', rememberMe ? 'true' : 'false');
+    saveAuth(data.token, data.user, rememberMe);
     setToken(data.token);
     setUser(data.user);
   }
 
   async function registerOwner(input: RegisterOwnerInput) {
     const { data } = await api.post('/auth/register-owner', input);
-    localStorage.setItem('poss_token', data.token);
-    localStorage.setItem('poss_user', JSON.stringify(data.user));
+    saveAuth(data.token, data.user, true);
     setToken(data.token);
     setUser(data.user);
   }
 
   function updateUser(nextUser: User) {
-    localStorage.setItem('poss_user', JSON.stringify(nextUser));
+    const storage = sessionStorage.getItem(TOKEN_KEY) ? sessionStorage : localStorage;
+    storage.setItem(USER_KEY, JSON.stringify(nextUser));
     setUser(nextUser);
   }
 
   function logout() {
-    localStorage.removeItem('poss_token');
-    localStorage.removeItem('poss_user');
+    clearStoredAuth();
     setToken(null);
     setUser(null);
   }

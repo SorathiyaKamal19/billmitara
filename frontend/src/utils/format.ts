@@ -18,7 +18,7 @@ export function shortDate(value: string) {
   return new Intl.DateTimeFormat(locale(), { dateStyle: 'medium', timeStyle: 'short', timeZone: TIMEZONE }).format(new Date(value));
 }
 
-export function formatOrderTime(value: string) {
+export function formatOrderTime(value: string | Date) {
   return new Intl.DateTimeFormat(locale(), {
     hour: 'numeric',
     minute: '2-digit',

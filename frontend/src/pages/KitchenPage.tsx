@@ -110,6 +110,10 @@ export function KitchenPage() {
               <StatusBadge value={order.type} />
             </div>
 
+            <div className="shrink-0 border-b border-gray-200 bg-emerald-50/70 px-4 py-3 dark:border-white/10 dark:bg-emerald-500/10">
+              <OrderTimer orderId={order._id} createdAt={order.createdAt} status={order.status} compact />
+            </div>
+
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
               <div className="space-y-3">
                 {order.items.map((item) => (

@@ -6,7 +6,7 @@ import { StatusBadge } from './StatusBadge';
 
 interface OrderTimerProps {
   orderId?: string;
-  createdAt: string;
+  createdAt: string | Date;
   status?: string;
   expectedMinutes?: string;
   compact?: boolean;
