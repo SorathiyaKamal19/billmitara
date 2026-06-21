@@ -36,20 +36,24 @@ function isPublicHttpsUrl(value) {
   }
 }
 
-function buildWhatsAppShareUrl({ mobile, message, pdfUrl }) {
+function buildWhatsAppShareUrl({ mobile, message, invoiceUrl, pdfUrl }) {
   const phone = formatShareNumber(mobile);
-  const text = [message, pdfUrl ? `Invoice PDF: ${pdfUrl}` : ''].filter(Boolean).join('\n');
+  const text = [
+    message,
+    invoiceUrl ? `View Invoice: ${invoiceUrl}` : '',
+    !invoiceUrl && pdfUrl ? `Invoice PDF: ${pdfUrl}` : ''
+  ].filter(Boolean).join('\n');
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
 
-export async function sendInvoiceWhatsApp({ mobile, message, pdfUrl }) {
+export async function sendInvoiceWhatsApp({ mobile, message, invoiceUrl, pdfUrl }) {
   if (!mobile) return { status: 'failed', providerId: null, reason: 'Missing customer mobile' };
 
   if (env.whatsappProvider === 'share_link') {
     return {
       status: 'share_link',
       providerId: null,
-      shareUrl: buildWhatsAppShareUrl({ mobile, message, pdfUrl })
+      shareUrl: buildWhatsAppShareUrl({ mobile, message, invoiceUrl, pdfUrl })
     };
   }
 
@@ -68,7 +72,7 @@ export async function sendInvoiceWhatsApp({ mobile, message, pdfUrl }) {
   const payload = {
     from,
     to,
-    body: message
+    body: [message, invoiceUrl ? `View Invoice: ${invoiceUrl}` : ''].filter(Boolean).join('\n')
   };
   if (pdfUrl) {
     if (!isPublicHttpsUrl(pdfUrl)) {

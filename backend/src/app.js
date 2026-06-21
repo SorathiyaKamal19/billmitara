@@ -34,6 +34,8 @@ export function createApp() {
     cors({
       origin: [
         "http://localhost:5173",
+        "https://billmitara.com",
+        "https://www.billmitara.com",
         "https://billmitara.vercel.app",
         "https://www.billmitara.bond",
         "https://billmitara.bond",

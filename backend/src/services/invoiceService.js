@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit';
+import { randomBytes } from 'crypto';
 import { Invoice } from '../models/Invoice.js';
 import { Order } from '../models/Order.js';
 import { Restaurant } from '../models/Restaurant.js';
@@ -46,6 +47,16 @@ async function nextBillNumber(restaurant) {
   const count = await Invoice.countDocuments({ restaurant: restaurant._id });
   const date = new Date().toISOString().slice(0, 10).replaceAll('-', '');
   return `${restaurant.invoicePrefix || 'POSS'}-${date}-${String(count + 1).padStart(4, '0')}`;
+}
+
+async function nextPublicCode() {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const code = randomBytes(5).toString('base64url').replace(/[^a-z0-9]/gi, '').slice(0, 8).toUpperCase();
+    if (code.length < 6) continue;
+    const exists = await Invoice.exists({ publicCode: code });
+    if (!exists) return code;
+  }
+  throw new Error('Could not generate invoice public code');
 }
 
 export async function buildInvoicePdfBuffer(invoice, order, restaurant) {
@@ -177,6 +188,7 @@ export async function createInvoiceForOrder(orderId, { sendWhatsApp = true, paym
   if (!order.customerMobile?.trim()) throw new Error('Customer mobile is required to finalize the bill');
   const restaurant = await Restaurant.findById(order.restaurant);
   const billNumber = await nextBillNumber(restaurant);
+  const publicCode = await nextPublicCode();
   const invoice = await Invoice.create({
     restaurant: restaurant._id,
     order: order._id,
@@ -198,6 +210,8 @@ export async function createInvoiceForOrder(orderId, { sendWhatsApp = true, paym
     total: order.total,
     paymentMode,
     payments,
+    publicCode,
+    publicUrl: `${env.publicClientUrl}/i/${publicCode}`,
     finalizedAt: new Date()
   });
 
@@ -222,6 +236,7 @@ export async function createInvoiceForOrder(orderId, { sendWhatsApp = true, paym
     const result = await sendInvoiceWhatsApp({
       mobile: order.customerMobile,
       message: `Thank you for visiting ${shortText(restaurant.name)}. Your bill ${invoice.billNumber} is ready. Visit Again!`,
+      invoiceUrl: invoice.publicUrl,
       pdfUrl: invoice.pdfUrl
     });
     invoice.whatsappStatus = result.status;

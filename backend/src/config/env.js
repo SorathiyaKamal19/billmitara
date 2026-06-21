@@ -23,6 +23,7 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET || 'dev-only-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  publicClientUrl: process.env.PUBLIC_CLIENT_URL || process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   publicApiUrl: process.env.PUBLIC_API_URL || `http://localhost:${process.env.PORT || 5000}`,
   mail: {
     resendApiKey: process.env.RESEND_API_KEY,
@@ -32,7 +33,7 @@ export const env = {
     otpMinutes: Number(process.env.PASSWORD_RESET_OTP_MINUTES || 10),
     maxAttempts: Number(process.env.PASSWORD_RESET_MAX_ATTEMPTS || 5)
   },
-  whatsappProvider: process.env.WHATSAPP_PROVIDER || 'mock',
+  whatsappProvider: process.env.WHATSAPP_PROVIDER || 'share_link',
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID,
     authToken: process.env.TWILIO_AUTH_TOKEN,

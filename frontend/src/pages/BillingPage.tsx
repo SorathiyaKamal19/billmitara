@@ -7,6 +7,8 @@ import {
   Trash2,
   Save,
   X,
+  ExternalLink,
+  QrCode,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -470,9 +472,52 @@ export function BillingPage() {
         </button>
         {invoice && (
           <div className="mt-4 space-y-3">
+            {invoice.whatsappShareUrl && (
+              <a
+                className="btn-primary w-full"
+                href={invoice.whatsappShareUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <MessageCircle size={18} /> {t("Send WhatsApp", "Send WhatsApp")}
+              </a>
+            )}
             <button className="btn-soft w-full" onClick={openPdf}>
               <Download size={18} /> {t("PDF ખોલો", "Open PDF")}
             </button>
+            {invoice.publicUrl && (
+              <a
+                className="btn-soft w-full"
+                href={invoice.publicUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ExternalLink size={18} /> {t("Customer bill page", "Customer bill page")}
+              </a>
+            )}
+            {invoice.qrDataUrl && (
+              <div className="border-t border-gray-200 pt-4 text-center dark:border-white/10">
+                <p className="text-sm font-black">
+                  {t("Scan to view invoice", "Scan to view invoice")}
+                </p>
+                <img
+                  src={invoice.qrDataUrl}
+                  alt="Invoice QR"
+                  className="mx-auto mt-3 size-48 rounded-lg bg-white p-3"
+                />
+                <p className="mt-2 break-all text-xs font-semibold text-gray-500">
+                  {invoice.publicUrl}
+                </p>
+              </div>
+            )}
+            {!invoice.qrDataUrl && invoice.publicUrl && (
+              <div className="border-t border-gray-200 pt-4 text-center dark:border-white/10">
+                <QrCode className="mx-auto text-gray-400" size={42} />
+                <p className="mt-2 break-all text-xs font-semibold text-gray-500">
+                  {invoice.publicUrl}
+                </p>
+              </div>
+            )}
             <button className="btn-soft w-full" onClick={() => window.print()}>
               <Printer size={18} /> {t("બિલ પ્રિન્ટ કરો", "Print bill")}
             </button>

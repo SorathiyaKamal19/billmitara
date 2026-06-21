@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { createInvoice, exportInvoicesExcel, getInvoicePdf, listInvoices, updateFinalizedInvoice } from '../controllers/invoiceController.js';
+import { createInvoice, exportInvoicesExcel, getInvoicePdf, getPublicInvoice, listInvoices, updateFinalizedInvoice } from '../controllers/invoiceController.js';
 import { authorize, protect } from '../middleware/auth.js';
 
 export const invoiceRoutes = Router();
+invoiceRoutes.get('/public/:code', getPublicInvoice);
 invoiceRoutes.get('/:id/pdf', getInvoicePdf);
 invoiceRoutes.use(protect);
 invoiceRoutes.get('/', authorize('owner', 'manager'), listInvoices);
