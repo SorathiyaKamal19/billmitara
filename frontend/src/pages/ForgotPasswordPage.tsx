@@ -59,6 +59,12 @@ export function ForgotPasswordPage() {
       setResendSeconds(RESEND_SECONDS);
       toast.success(data.message);
     } catch (error: any) {
+      if (error.response?.status === 404) {
+        setStep('email');
+        setOtp('');
+        setResetToken('');
+        setResendSeconds(0);
+      }
       toast.error(
         error.name === 'ValidationError'
           ? error.message
