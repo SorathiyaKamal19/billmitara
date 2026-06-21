@@ -69,7 +69,7 @@ export function LoginPage() {
           <div className="relative flex h-full flex-col justify-between">
             <div className="flex items-center gap-3">
               <div className="grid size-12 place-items-center rounded-xl bg-white/15">
-                <img src="/assets/billmitara-b-favicon.svg" alt="BillMitara" className="size-9" />
+                <img src="../../public/favicon.svg" alt="BillMitara" className="size-9" />
               </div>
               <div>
                 <p className="text-2xl font-black">BillMitara</p>

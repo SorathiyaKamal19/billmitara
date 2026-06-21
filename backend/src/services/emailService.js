@@ -1,38 +1,19 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { env } from "../config/env.js";
 import { ApiError } from "../utils/apiError.js";
-import dns from "dns";
-let transporter;
-dns.setDefaultResultOrder("ipv4first");
 
-function getTransporter() {
-  if (!env.mail.user || !env.mail.appPassword) {
+let resend;
+
+function getResendClient() {
+  if (!env.mail.resendApiKey) {
     throw new ApiError(503, "Password reset email is not configured");
   }
 
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: env.mail.host,
-      port: Number(env.mail.port),
-      secure: env.mail.secure === true || env.mail.secure === "true",
-      auth: {
-        user: env.mail.user,
-        pass: env.mail.appPassword,
-      },
-
-      lookup(hostname, options, callback) {
-        return dns.lookup(hostname, { family: 4 }, callback);
-      },
-    });
-    console.log("SMTP CONFIG", {
-      host: env.mail.host,
-      port: env.mail.port,
-      secure: env.mail.secure,
-      user: env.mail.user,
-    });
+  if (!resend) {
+    resend = new Resend(env.mail.resendApiKey);
   }
 
-  return transporter;
+  return resend;
 }
 
 function escapeHtml(value = "") {
@@ -54,11 +35,10 @@ export async function sendPasswordResetOtp({ email, name, otp }) {
   const minutes = env.passwordReset.otpMinutes;
 
   try {
-    await getTransporter().sendMail({
+    const { error } = await getResendClient().emails.send({
       from: env.mail.from,
       to: email,
       subject: `${otp} is your BillMitara password reset code`,
-      text: `Hello ${name || "there"}, your BillMitara password reset code is ${otp}. It expires in ${minutes} minutes. If you did not request this, ignore this email.`,
       html: `
         <div style="background:#f8fafc;padding:32px;font-family:Arial,sans-serif;color:#0f172a">
           <div style="max-width:520px;margin:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:32px">
@@ -70,14 +50,17 @@ export async function sendPasswordResetOtp({ email, name, otp }) {
           </div>
         </div>
       `,
+      text: `Hello ${name || "there"}, your BillMitara password reset code is ${otp}. It expires in ${minutes} minutes. If you did not request this, ignore this email.`,
     });
+
+    if (error) {
+      throw error;
+    }
   } catch (error) {
     console.error("Password reset email failed:", {
       message: error.message,
-      code: error.code,
-      command: error.command,
-      responseCode: error.responseCode,
-      response: error.response,
+      name: error.name,
+      statusCode: error.statusCode,
     });
     if (error instanceof ApiError) throw error;
     throw new ApiError(502, "Could not send password reset email");

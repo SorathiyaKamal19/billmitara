@@ -161,6 +161,71 @@ export function BillingPage() {
 
   return (
     <div className="billing-page grid gap-6 xl:grid-cols-[1fr_360px]">
+      <style>{`
+        @media print {
+          @page {
+            size: A4;
+            margin: 14mm 12mm;
+          }
+          html, body {
+            background: #fff !important;
+          }
+          body * {
+            visibility: hidden;
+          }
+          .print-bill, .print-bill * {
+            visibility: visible;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .print-bill {
+            position: absolute;
+            inset: 0;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: #fff !important;
+            color: #111 !important;
+            font-family: Georgia, "Times New Roman", serif;
+          }
+          .print-bill .text-saffron {
+            color: #92400e !important;
+          }
+          .print-bill p,
+          .print-bill h1,
+          .print-bill span,
+          .print-bill div {
+            color: #111 !important;
+          }
+          .print-bill .text-gray-500,
+          .print-bill .text-gray-600 {
+            color: #555 !important;
+          }
+          .print-bill .print-items {
+            border: 1px solid #222 !important;
+            border-radius: 4px !important;
+            box-shadow: none !important;
+          }
+          .print-bill .print-items > div {
+            border-color: #ddd !important;
+          }
+          .print-bill .print-items > div:first-child {
+            background: #f3f3f3 !important;
+            border-bottom: 1px solid #222 !important;
+          }
+          .print-bill .bill-totals {
+            border-top: 2px dashed #222 !important;
+            padding-top: 14px !important;
+          }
+          .print-bill .border-dashed {
+            border-color: #999 !important;
+          }
+        }
+      `}</style>
       <div className="print-bill glass rounded-lg p-6">
         <div className="border-b border-dashed border-gray-300 pb-5 text-center dark:border-white/20">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-saffron">
@@ -223,13 +288,13 @@ export function BillingPage() {
               {formatBillDateTime(order.createdAt)}
             </p>
           </div>
-          <div className="text-right">
+          {/* <div className="text-right">
             <p className="font-black">{order.tableName || order.type}</p>
             <p className="text-sm text-gray-500">
               {order.customerName || t("વૉક-ઇન", "Walk-in")} ·{" "}
               {billingMobile || t("મોબાઇલ નથી", "No mobile")}
             </p>
-          </div>
+          </div> */}
         </div>
         <div className="print-items mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-white/5">
           <div className="grid grid-cols-[1fr_48px_72px_90px] gap-2 border-b border-gray-200 px-4 py-3 text-xs font-black uppercase text-gray-500 dark:border-white/10">
