@@ -36,6 +36,12 @@ function paymentLabel(value) {
   return 'Cash';
 }
 
+function shortText(value, maxLength = 80) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 3)}...`;
+}
+
 async function nextBillNumber(restaurant) {
   const count = await Invoice.countDocuments({ restaurant: restaurant._id });
   const date = new Date().toISOString().slice(0, 10).replaceAll('-', '');
@@ -215,7 +221,7 @@ export async function createInvoiceForOrder(orderId, { sendWhatsApp = true, paym
   if (sendWhatsApp && order.customerMobile) {
     const result = await sendInvoiceWhatsApp({
       mobile: order.customerMobile,
-      message: `Thank you for visiting ${restaurant.name}. Your bill ${invoice.billNumber} is ready. Visit Again!`,
+      message: `Thank you for visiting ${shortText(restaurant.name)}. Your bill ${invoice.billNumber} is ready. Visit Again!`,
       pdfUrl: invoice.pdfUrl
     });
     invoice.whatsappStatus = result.status;
