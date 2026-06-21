@@ -35,7 +35,7 @@ export async function sendInvoiceWhatsApp({ mobile, message, pdfUrl }) {
   if (!mobile) return { status: 'failed', providerId: null, reason: 'Missing customer mobile' };
 
   if (env.whatsappProvider !== 'twilio') {
-    console.log(`[mock-whatsapp] ${mobile}: ${message} ${pdfUrl || ''}`);
+    console.log(`[mock-whatsapp] ${mobile}: ${message}`);
     return { status: 'mock_sent', providerId: `mock-${Date.now()}` };
   }
 
