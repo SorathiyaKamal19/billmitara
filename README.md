@@ -74,11 +74,13 @@ To send through Twilio WhatsApp, set:
 WHATSAPP_PROVIDER=twilio
 TWILIO_ACCOUNT_SID=...
 TWILIO_AUTH_TOKEN=...
-TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+TWILIO_WHATSAPP_FROM=whatsapp:+91XXXXXXXXXX
 PUBLIC_API_URL=https://your-api-domain.com
 ```
 
-If Twilio returns `Twilio could not find a Channel with the specified From address`, the sender in `TWILIO_WHATSAPP_FROM` is not available on the Twilio account being used. For sandbox testing, keep `TWILIO_WHATSAPP_FROM=whatsapp:+14155238886`, enable the WhatsApp Sandbox on the same account as `TWILIO_ACCOUNT_SID`, and have the recipient join that sandbox before sending. For production, replace the sandbox number with your approved WhatsApp sender from Twilio, including the `whatsapp:` prefix.
+Customer mobile numbers can be entered as `9876543210`, `+919876543210`, `919876543210`, or `whatsapp:+919876543210`; the backend normalizes them to Twilio's `whatsapp:+91...` format. `TWILIO_WHATSAPP_FROM` is normalized the same way, but it must still be an approved Twilio WhatsApp sender on the same account as `TWILIO_ACCOUNT_SID`.
+
+If Twilio returns `Twilio could not find a Channel with the specified From address`, the sender in `TWILIO_WHATSAPP_FROM` is not available on the Twilio account being used. For sandbox testing, keep Twilio's sandbox sender, enable the WhatsApp Sandbox on the same account as `TWILIO_ACCOUNT_SID`, and have the recipient join that sandbox before sending. For production, replace the sandbox number with your approved WhatsApp sender from Twilio.
 
 ## Resend OTP Password Reset
 

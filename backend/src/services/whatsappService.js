@@ -3,13 +3,14 @@ import { env } from '../config/env.js';
 
 function formatWhatsAppNumber(mobile) {
   const raw = String(mobile || '').trim();
-  const withoutChannel = raw.startsWith('whatsapp:') ? raw.slice('whatsapp:'.length) : raw;
+  const withoutChannel = raw.replace(/^whatsapp:/i, '');
   const compact = withoutChannel.replace(/[\s()-]/g, '');
+  const digits = compact.replace(/^\+/, '');
 
-  if (/^\d{10}$/.test(compact)) return `whatsapp:+91${compact}`;
-  if (/^91\d{10}$/.test(compact)) return `whatsapp:+${compact}`;
+  if (/^\d{10}$/.test(digits)) return `whatsapp:+91${digits}`;
+  if (/^91\d{10}$/.test(digits)) return `whatsapp:+${digits}`;
   if (compact.startsWith('+')) return `whatsapp:${compact}`;
-  return raw.startsWith('whatsapp:') ? raw : `whatsapp:${compact}`;
+  return `whatsapp:${compact}`;
 }
 
 export async function sendInvoiceWhatsApp({ mobile, message, pdfUrl }) {
@@ -25,9 +26,10 @@ export async function sendInvoiceWhatsApp({ mobile, message, pdfUrl }) {
   }
 
   const client = twilio(env.twilio.accountSid, env.twilio.authToken);
+  const from = formatWhatsAppNumber(env.twilio.from);
   const to = formatWhatsAppNumber(mobile);
   const payload = {
-    from: env.twilio.from,
+    from,
     to,
     body: `${message}\n${pdfUrl || ''}`.trim()
   };
