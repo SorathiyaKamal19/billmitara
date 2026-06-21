@@ -66,7 +66,16 @@ Backend API: `http://localhost:5000/api`
 
 ## WhatsApp Billing
 
-By default `WHATSAPP_PROVIDER=mock`, so bill messages are logged to the backend console for local testing.
+By default `WHATSAPP_PROVIDER=share_link`, so bill generation opens WhatsApp with a prefilled message and invoice PDF link. The user confirms and sends the WhatsApp message from their own device/browser session.
+
+```env
+WHATSAPP_PROVIDER=share_link
+PUBLIC_API_URL=https://your-api-domain.com
+```
+
+Customer mobile numbers can be entered as `9876543210`, `+919876543210`, `919876543210`, or `whatsapp:+919876543210`; the backend normalizes them for the WhatsApp share link.
+
+WhatsApp share links can prefill text and links, but they cannot attach/upload a PDF file directly. The generated message includes the invoice PDF URL.
 
 To send through Twilio WhatsApp, set:
 
@@ -78,7 +87,7 @@ TWILIO_WHATSAPP_FROM=whatsapp:+91XXXXXXXXXX
 PUBLIC_API_URL=https://your-api-domain.com
 ```
 
-Customer mobile numbers can be entered as `9876543210`, `+919876543210`, `919876543210`, or `whatsapp:+919876543210`; the backend normalizes them to Twilio's `whatsapp:+91...` format. `TWILIO_WHATSAPP_FROM` is normalized the same way, but it must still be an approved Twilio WhatsApp sender on the same account as `TWILIO_ACCOUNT_SID`.
+For Twilio, `TWILIO_WHATSAPP_FROM` is normalized the same way, but it must still be an approved Twilio WhatsApp sender on the same account as `TWILIO_ACCOUNT_SID`.
 
 Invoice PDFs are sent as WhatsApp document media attachments. Set `PUBLIC_API_URL` to the public HTTPS backend URL so Twilio can download the PDF; `localhost` URLs cannot be fetched by Twilio.
 

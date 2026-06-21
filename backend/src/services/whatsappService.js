@@ -13,6 +13,11 @@ function formatWhatsAppNumber(mobile) {
   return `whatsapp:${compact}`;
 }
 
+function formatShareNumber(mobile) {
+  const formatted = formatWhatsAppNumber(mobile);
+  return formatted.replace(/^whatsapp:\+?/, '').replace(/\D/g, '');
+}
+
 function isPublicHttpsUrl(value) {
   try {
     const url = new URL(value);
@@ -31,8 +36,22 @@ function isPublicHttpsUrl(value) {
   }
 }
 
+function buildWhatsAppShareUrl({ mobile, message, pdfUrl }) {
+  const phone = formatShareNumber(mobile);
+  const text = [message, pdfUrl ? `Invoice PDF: ${pdfUrl}` : ''].filter(Boolean).join('\n');
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+}
+
 export async function sendInvoiceWhatsApp({ mobile, message, pdfUrl }) {
   if (!mobile) return { status: 'failed', providerId: null, reason: 'Missing customer mobile' };
+
+  if (env.whatsappProvider === 'share_link') {
+    return {
+      status: 'share_link',
+      providerId: null,
+      shareUrl: buildWhatsAppShareUrl({ mobile, message, pdfUrl })
+    };
+  }
 
   if (env.whatsappProvider !== 'twilio') {
     console.log(`[mock-whatsapp] ${mobile}: ${message}`);

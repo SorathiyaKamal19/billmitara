@@ -122,8 +122,13 @@ export function BillingPage() {
       });
       setInvoice(data);
       setShowPayment(false);
+      if (data.whatsappShareUrl) {
+        window.open(data.whatsappShareUrl, "_blank", "noopener,noreferrer");
+      }
       const whatsappMessage = data.whatsappStatus === "failed" && data.whatsappReason
         ? `WhatsApp failed: ${data.whatsappReason}`
+        : data.whatsappShareUrl
+          ? "WhatsApp opened"
         : `WhatsApp: ${data.whatsappStatus}`;
       toast.success(`${t("બિલ બન્યું", "Bill generated")}. ${whatsappMessage}`);
     } catch (error: any) {

@@ -226,6 +226,7 @@ export async function createInvoiceForOrder(orderId, { sendWhatsApp = true, paym
     });
     invoice.whatsappStatus = result.status;
     invoice.whatsappReason = result.reason;
+    invoice.whatsappShareUrl = result.shareUrl;
     await invoice.save();
   }
   emitRestaurant(String(order.restaurant), 'invoice:created', invoice);

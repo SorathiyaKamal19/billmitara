@@ -21,8 +21,9 @@ const invoiceSchema = new mongoose.Schema(
     roundOff: { type: Number, default: 0 },
     total: Number,
     pdfUrl: String,
-    whatsappStatus: { type: String, enum: ['not_sent', 'queued', 'sent', 'failed', 'mock_sent'], default: 'not_sent' },
+    whatsappStatus: { type: String, enum: ['not_sent', 'queued', 'sent', 'failed', 'mock_sent', 'share_link'], default: 'not_sent' },
     whatsappReason: String,
+    whatsappShareUrl: String,
     paymentMode: { type: String, enum: ['cash', 'upi', 'card', 'partial'], default: 'cash' },
     payments: [
       {
