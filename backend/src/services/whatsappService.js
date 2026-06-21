@@ -13,6 +13,24 @@ function formatWhatsAppNumber(mobile) {
   return `whatsapp:${compact}`;
 }
 
+function isPublicHttpsUrl(value) {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase();
+    return (
+      url.protocol === 'https:' &&
+      hostname !== 'localhost' &&
+      hostname !== '127.0.0.1' &&
+      !hostname.endsWith('.local') &&
+      !/^10\./.test(hostname) &&
+      !/^192\.168\./.test(hostname) &&
+      !/^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function sendInvoiceWhatsApp({ mobile, message, pdfUrl }) {
   if (!mobile) return { status: 'failed', providerId: null, reason: 'Missing customer mobile' };
 
@@ -31,8 +49,18 @@ export async function sendInvoiceWhatsApp({ mobile, message, pdfUrl }) {
   const payload = {
     from,
     to,
-    body: `${message}\n${pdfUrl || ''}`.trim()
+    body: message
   };
+  if (pdfUrl) {
+    if (!isPublicHttpsUrl(pdfUrl)) {
+      return {
+        status: 'failed',
+        providerId: null,
+        reason: 'Invoice PDF URL must be a public HTTPS URL for WhatsApp document delivery'
+      };
+    }
+    payload.mediaUrl = [pdfUrl];
+  }
   try {
     const result = await client.messages.create(payload);
     return { status: 'sent', providerId: result.sid };
