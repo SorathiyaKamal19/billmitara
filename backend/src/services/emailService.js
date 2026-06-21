@@ -30,6 +30,14 @@ function escapeHtml(value = "") {
   );
 }
 
+function resendErrorDetails(error) {
+  return {
+    name: error?.name,
+    message: error?.message || "Unknown Resend error",
+    statusCode: error?.statusCode,
+  };
+}
+
 export async function sendPasswordResetOtp({ email, name, otp }) {
   const safeName = escapeHtml(name || "there");
   const minutes = env.passwordReset.otpMinutes;
@@ -57,12 +65,12 @@ export async function sendPasswordResetOtp({ email, name, otp }) {
       throw error;
     }
   } catch (error) {
-    console.error("Password reset email failed:", {
-      message: error.message,
-      name: error.name,
-      statusCode: error.statusCode,
-    });
+    const details = resendErrorDetails(error);
+    console.error("Password reset email failed:", details);
     if (error instanceof ApiError) throw error;
+    if (env.nodeEnv !== "production") {
+      throw new ApiError(502, `Could not send password reset email: ${details.message}`);
+    }
     throw new ApiError(502, "Could not send password reset email");
   }
 }

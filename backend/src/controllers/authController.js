@@ -155,7 +155,7 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
     message: 'If an active account exists for this email, a reset code has been sent.'
   };
 
-  if (!user) return res.json(response);
+  if (!user) throw new ApiError(404, 'No active account found with this email address');
 
   const existing = await PasswordResetOtp.findOne({ user: user._id });
   if (existing && existing.createdAt > new Date(Date.now() - 60 * 1000)) {

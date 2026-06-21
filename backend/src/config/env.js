@@ -1,6 +1,10 @@
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 function booleanEnv(value, defaultValue = false) {
   if (value === undefined) return defaultValue;
@@ -22,7 +26,7 @@ export const env = {
   publicApiUrl: process.env.PUBLIC_API_URL || `http://localhost:${process.env.PORT || 5000}`,
   mail: {
     resendApiKey: process.env.RESEND_API_KEY,
-    from: process.env.RESEND_FROM || process.env.MAIL_FROM || 'onboarding@resend.dev'
+    from: process.env.RESEND_FROM || 'onboarding@resend.dev'
   },
   passwordReset: {
     otpMinutes: Number(process.env.PASSWORD_RESET_OTP_MINUTES || 10),
