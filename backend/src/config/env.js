@@ -21,12 +21,8 @@ export const env = {
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   publicApiUrl: process.env.PUBLIC_API_URL || `http://localhost:${process.env.PORT || 5000}`,
   mail: {
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: Number(process.env.SMTP_PORT || 465),
-    secure: process.env.SMTP_SECURE !== 'false',
-    user: process.env.GMAIL_USER,
-    appPassword: process.env.GMAIL_APP_PASSWORD,
-    from: process.env.MAIL_FROM || process.env.GMAIL_USER
+    resendApiKey: process.env.RESEND_API_KEY,
+    from: process.env.RESEND_FROM || process.env.MAIL_FROM || 'onboarding@resend.dev'
   },
   passwordReset: {
     otpMinutes: Number(process.env.PASSWORD_RESET_OTP_MINUTES || 10),

@@ -80,26 +80,20 @@ PUBLIC_API_URL=https://your-api-domain.com
 
 If Twilio returns `Twilio could not find a Channel with the specified From address`, the sender in `TWILIO_WHATSAPP_FROM` is not available on the Twilio account being used. For sandbox testing, keep `TWILIO_WHATSAPP_FROM=whatsapp:+14155238886`, enable the WhatsApp Sandbox on the same account as `TWILIO_ACCOUNT_SID`, and have the recipient join that sandbox before sending. For production, replace the sandbox number with your approved WhatsApp sender from Twilio, including the `whatsapp:` prefix.
 
-## Gmail OTP Password Reset
+## Resend OTP Password Reset
 
-Forgot-password emails are sent through Gmail SMTP. The OTP is six digits, stored as a hash, expires after 10 minutes, and is removed after a successful reset.
+Forgot-password emails are sent through Resend. The OTP is six digits, stored as a hash, expires after 10 minutes, and is removed after a successful reset.
 
-1. Enable 2-Step Verification on the Google account used to send mail.
-2. Create a Google App Password.
-3. Add these backend environment variables:
+Add these backend environment variables:
 
 ```env
-GMAIL_USER=your-account@gmail.com
-GMAIL_APP_PASSWORD=your-16-character-app-password
-MAIL_FROM=BillMitara <your-account@gmail.com>
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_SECURE=true
+RESEND_API_KEY=re_your_resend_api_key
+RESEND_FROM=onboarding@resend.dev
 PASSWORD_RESET_OTP_MINUTES=10
 PASSWORD_RESET_MAX_ATTEMPTS=5
 ```
 
-Use the Google App Password, not the normal Gmail password. Never place these values in frontend environment variables.
+Use a verified Resend domain/sender for production mail. Never place these values in frontend environment variables.
 
 ## Production Deployment
 
@@ -115,9 +109,8 @@ CLIENT_ORIGIN=https://your-frontend-domain.com
 PUBLIC_API_URL=https://your-backend-domain.com
 KEEP_ALIVE_ENABLED=true
 KEEP_ALIVE_INTERVAL_MINUTES=9
-GMAIL_USER=your-account@gmail.com
-GMAIL_APP_PASSWORD=your-google-app-password
-MAIL_FROM=BillMitara <your-account@gmail.com>
+RESEND_API_KEY=re_your_resend_api_key
+RESEND_FROM=BillMitara <noreply@your-domain.com>
 ```
 
 Set this variable when building the frontend:
@@ -133,7 +126,7 @@ npm run build
 npm run start
 ```
 
-The backend health endpoint is `GET /api/health`. Ensure the deployment platform allows outbound SMTP connections to Gmail and that `CLIENT_ORIGIN` exactly matches the deployed frontend origin.
+The backend health endpoint is `GET /api/health`. Ensure the deployment platform allows outbound HTTPS requests to Resend and that `CLIENT_ORIGIN` exactly matches the deployed frontend origin.
 
 For Render free instances, enable the keep-alive cron with `KEEP_ALIVE_ENABLED=true`. It pings `PUBLIC_API_URL/api/health` every 9 minutes by default, which keeps the idle gap below 10 minutes. If your health URL is different, set `KEEP_ALIVE_URL=https://your-backend-domain.com/api/health`.
 
