@@ -22,6 +22,7 @@ const OrderDetailsPage = lazy(() => import('./pages/OrderDetailsPage').then((mod
 const OrderPage = lazy(() => import('./pages/OrderPage').then((module) => ({ default: module.OrderPage })));
 const ParcelPage = lazy(() => import('./pages/ParcelPage').then((module) => ({ default: module.ParcelPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then((module) => ({ default: module.ProfilePage })));
+const PublicInvoicePage = lazy(() => import('./pages/PublicInvoicePage').then((module) => ({ default: module.PublicInvoicePage })));
 const QrMenuPage = lazy(() => import('./pages/QrMenuPage').then((module) => ({ default: module.QrMenuPage })));
 const RegisterOwnerPage = lazy(() => import('./pages/RegisterOwnerPage').then((module) => ({ default: module.RegisterOwnerPage })));
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((module) => ({ default: module.ReportsPage })));
@@ -50,6 +51,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               <Route path="/login" element={<LoginPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/register-owner" element={<RegisterOwnerPage />} />
+              <Route path="/i/:code" element={<PublicInvoicePage />} />
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route index element={<HomeRedirect />} />
                 <Route path="/tables" element={<ProtectedRoute roles={['owner', 'manager', 'waiter']}><TablesPage /></ProtectedRoute>} />

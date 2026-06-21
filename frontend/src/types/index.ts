@@ -96,6 +96,9 @@ export interface Invoice {
   gst: number;
   total: number;
   pdfUrl?: string;
+  publicCode?: string;
+  publicUrl?: string;
+  qrDataUrl?: string;
   whatsappStatus: string;
   whatsappReason?: string;
   whatsappShareUrl?: string;

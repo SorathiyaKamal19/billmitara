@@ -31,6 +31,8 @@ const invoiceSchema = new mongoose.Schema(
         amount: { type: Number, required: true, min: 0 }
       }
     ],
+    publicCode: { type: String, unique: true, sparse: true, index: true },
+    publicUrl: String,
     finalizedAt: Date,
     editReason: String,
     editedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }

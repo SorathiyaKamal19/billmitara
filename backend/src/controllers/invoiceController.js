@@ -1,9 +1,11 @@
 import ExcelJS from 'exceljs';
+import QRCode from 'qrcode';
 import { Invoice } from '../models/Invoice.js';
 import { Order } from '../models/Order.js';
 import { Restaurant } from '../models/Restaurant.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/apiError.js';
+import { env } from '../config/env.js';
 import { createInvoiceForOrder, buildInvoicePdfBuffer } from '../services/invoiceService.js';
 import { calculateOrderTotals } from '../utils/tax.js';
 
@@ -14,6 +16,58 @@ function pdfFileName(restaurant, invoice) {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
   return `${safeName || invoice.billNumber}.pdf`;
+}
+
+function publicInvoiceUrl(invoice) {
+  return invoice.publicUrl || `${env.publicClientUrl}/i/${invoice.publicCode}`;
+}
+
+function maskMobile(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (digits.length < 4) return '';
+  return `${'*'.repeat(Math.max(0, digits.length - 4))}${digits.slice(-4)}`;
+}
+
+function publicInvoicePayload(invoice, order, restaurant) {
+  return {
+    invoice: {
+      billNumber: invoice.billNumber,
+      customerName: invoice.customerName,
+      customerMobile: maskMobile(invoice.customerMobile),
+      subtotal: invoice.subtotal,
+      discount: invoice.discount,
+      discountReason: invoice.discountReason,
+      takeawayCharge: invoice.takeawayCharge ?? invoice.parcelCharge,
+      gstEnabled: invoice.gstEnabled,
+      gstRate: invoice.gstRate,
+      gst: invoice.gst,
+      roundOff: invoice.roundOff,
+      total: invoice.total,
+      paymentMode: invoice.paymentMode,
+      payments: invoice.payments,
+      pdfUrl: invoice.pdfUrl,
+      publicUrl: publicInvoiceUrl(invoice),
+      createdAt: invoice.finalizedAt || invoice.createdAt
+    },
+    order: {
+      type: order.type,
+      tableName: order.tableName,
+      items: order.items.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        note: item.note
+      }))
+    },
+    restaurant: {
+      name: restaurant.name,
+      address: restaurant.address,
+      phone: restaurant.phone,
+      gstNumber: restaurant.gstNumber,
+      gstEnabled: restaurant.gstEnabled,
+      brandColor: restaurant.brandColor
+    }
+  };
 }
 
 export const createInvoice = asyncHandler(async (req, res) => {
@@ -33,10 +87,20 @@ export const createInvoice = asyncHandler(async (req, res) => {
       payments,
       customerMobile: mobile
     });
-    res.status(201).json(invoice);
+    const qrDataUrl = invoice.publicUrl ? await QRCode.toDataURL(invoice.publicUrl) : null;
+    res.status(201).json({ ...invoice.toObject(), qrDataUrl });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
+});
+
+export const getPublicInvoice = asyncHandler(async (req, res) => {
+  const invoice = await Invoice.findOne({ publicCode: String(req.params.code || '').toUpperCase() });
+  if (!invoice) throw new ApiError(404, 'Invoice not found');
+  const order = await Order.findById(invoice.order);
+  const restaurant = await Restaurant.findById(invoice.restaurant);
+  if (!order || !restaurant) throw new ApiError(404, 'Invoice data not found');
+  res.json(publicInvoicePayload(invoice, order, restaurant));
 });
 
 export const getInvoicePdf = asyncHandler(async (req, res) => {
