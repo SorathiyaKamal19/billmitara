@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { synchronizedNow } from '../utils/serverClock';
 
 export function formatElapsed(ms: number) {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
@@ -30,7 +31,7 @@ export function useElapsedTime(since: string | Date | undefined) {
     const startTime = start;
 
     function tick() {
-      setElapsed(formatElapsed(Date.now() - startTime));
+      setElapsed(formatElapsed(synchronizedNow() - startTime));
     }
 
     tick();

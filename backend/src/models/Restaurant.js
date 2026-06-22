@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const restaurantSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
+    name: { type: String, required: true, trim: true, maxlength: 30 },
     brandColor: { type: String, default: '#f97316' },
     logoUrl: String,
     address: String,

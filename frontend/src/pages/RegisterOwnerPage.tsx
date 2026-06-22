@@ -22,7 +22,7 @@ const ownerSchema = yup.object({
   email: yup.string().trim().email('Enter a valid email').required('Owner email is required'),
   password: yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
   phone: yup.string().trim().min(6, 'Enter a valid mobile number').required('Owner mobile number is required'),
-  restaurantName: yup.string().trim().min(2, 'Restaurant name is too short').required('Restaurant name is required'),
+  restaurantName: yup.string().trim().min(2, 'Restaurant name is too short').max(30, 'Restaurant name must be 30 characters or less').required('Restaurant name is required'),
   restaurantPhone: yup.string().trim(),
   restaurantAddress: yup.string().trim()
 });
@@ -210,6 +210,7 @@ export function RegisterOwnerPage() {
                     value={form.restaurantName}
                     onChange={(e) => setField('restaurantName', e.target.value)}
                     autoComplete="organization"
+                    maxLength={30}
                     required
                   />
                 </div>
