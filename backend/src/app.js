@@ -6,6 +6,7 @@ import morgan from "morgan";
 import { env } from "./config/env.js";
 import { apiRoutes } from "./routes/index.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
+import { performanceHeaders } from "./middleware/performance.js";
 
 const allowedClientOrigins = [
   env.clientOrigin,
@@ -41,13 +42,10 @@ export function createApp() {
     cors({
       origin: corsOrigin,
       credentials: true,
-      exposedHeaders: ["X-Server-Time"],
+      exposedHeaders: ["Server-Timing", "X-Response-Time", "X-Server-Time"],
     }),
   );
-  app.use((req, res, next) => {
-    res.setHeader("X-Server-Time", new Date().toISOString());
-    next();
-  });
+  app.use(performanceHeaders);
   app.use(express.json({ limit: "2mb" }));
   app.use(express.urlencoded({ extended: true }));
   app.use(morgan(env.nodeEnv === "production" ? "combined" : "dev"));

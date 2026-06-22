@@ -44,6 +44,7 @@ export const env = {
     url: process.env.KEEP_ALIVE_URL,
     intervalMinutes: numberEnv(process.env.KEEP_ALIVE_INTERVAL_MINUTES, 9)
   },
+  slowRequestMs: numberEnv(process.env.SLOW_REQUEST_MS, 1000),
   seed: {
     ownerEmail: process.env.SEED_OWNER_EMAIL || 'owner@poss.local',
     ownerPassword: process.env.SEED_OWNER_PASSWORD || 'Password@123'

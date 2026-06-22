@@ -13,5 +13,7 @@ const customerSchema = new mongoose.Schema(
 );
 
 customerSchema.index({ restaurant: 1, mobile: 1 }, { unique: true });
+customerSchema.index({ restaurant: 1, totalSpending: -1 });
+customerSchema.index({ restaurant: 1, lastVisitAt: -1 });
 
 export const Customer = mongoose.model('Customer', customerSchema);

@@ -118,12 +118,12 @@ export const getInvoicePdf = asyncHandler(async (req, res) => {
 });
 
 export const listInvoices = asyncHandler(async (req, res) => {
-  const invoices = await Invoice.find({ restaurant: req.user.restaurant }).sort({ createdAt: -1 }).limit(100);
+  const invoices = await Invoice.find({ restaurant: req.user.restaurant }).sort({ createdAt: -1 }).limit(100).lean();
   res.json(invoices);
 });
 
 export const exportInvoicesExcel = asyncHandler(async (req, res) => {
-  const invoices = await Invoice.find({ restaurant: req.user.restaurant }).sort({ createdAt: -1 });
+  const invoices = await Invoice.find({ restaurant: req.user.restaurant }).sort({ createdAt: -1 }).lean();
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Sales');
   sheet.columns = [
@@ -136,7 +136,7 @@ export const exportInvoicesExcel = asyncHandler(async (req, res) => {
     { header: 'Payment', key: 'paymentMode', width: 12 },
     { header: 'Date', key: 'createdAt', width: 24 }
   ];
-  invoices.forEach((invoice) => sheet.addRow(invoice.toObject()));
+  invoices.forEach((invoice) => sheet.addRow(invoice));
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', 'attachment; filename="poss-sales-report.xlsx"');
   await workbook.xlsx.write(res);

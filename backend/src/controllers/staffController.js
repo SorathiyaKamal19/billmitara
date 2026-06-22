@@ -34,7 +34,8 @@ export const listStaff = asyncHandler(async (req, res) => {
     role: { $ne: 'owner' }
   })
     .select('-password')
-    .sort({ role: 1, name: 1 });
+    .sort({ role: 1, name: 1 })
+    .lean();
 
   res.json(users);
 });

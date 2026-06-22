@@ -12,4 +12,8 @@ const tableSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+tableSchema.index({ restaurant: 1, zone: 1, name: 1 });
+tableSchema.index({ restaurant: 1, status: 1 });
+tableSchema.index({ restaurant: 1, currentOrder: 1 });
+
 export const Table = mongoose.model('Table', tableSchema);

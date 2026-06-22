@@ -40,4 +40,8 @@ const invoiceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+invoiceSchema.index({ restaurant: 1, createdAt: -1 });
+invoiceSchema.index({ restaurant: 1, paymentMode: 1, createdAt: -1 });
+invoiceSchema.index({ restaurant: 1, order: 1 });
+
 export const Invoice = mongoose.model('Invoice', invoiceSchema);

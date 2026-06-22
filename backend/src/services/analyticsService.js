@@ -35,62 +35,65 @@ export async function getDashboardAnalytics(restaurantId, period = 'today', cust
   const match = { restaurant: restaurantId, createdAt: { $gte: start, $lte: end }, status: { $ne: 'cancelled' } };
   const invoiceMatch = { restaurant: restaurantId, createdAt: { $gte: start, $lte: end } };
 
-  const [summary] = await Order.aggregate([
-    { $match: match },
-    {
-      $group: {
-        _id: null,
-        revenue: { $sum: '$total' },
-        orders: { $sum: 1 },
-        takeawayOrders: { $sum: { $cond: [{ $eq: ['$type', 'takeaway'] }, 1, 0] } },
-        parcelOrders: { $sum: { $cond: [{ $eq: ['$type', 'takeaway'] }, 1, 0] } },
-        dineInOrders: { $sum: { $cond: [{ $eq: ['$type', 'dine-in'] }, 1, 0] } },
-        gst: { $sum: '$gst' }
+  const [
+    [summary],
+    topItems,
+    topCategories,
+    salesTrend,
+    peakHours,
+    recentBills,
+    customerCount,
+    paymentStats,
+    partialPayments
+  ] = await Promise.all([
+    Order.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: null,
+          revenue: { $sum: '$total' },
+          orders: { $sum: 1 },
+          takeawayOrders: { $sum: { $cond: [{ $eq: ['$type', 'takeaway'] }, 1, 0] } },
+          parcelOrders: { $sum: { $cond: [{ $eq: ['$type', 'takeaway'] }, 1, 0] } },
+          dineInOrders: { $sum: { $cond: [{ $eq: ['$type', 'dine-in'] }, 1, 0] } },
+          gst: { $sum: '$gst' }
+        }
       }
-    }
+    ]),
+    Order.aggregate([
+      { $match: match },
+      { $unwind: '$items' },
+      { $group: { _id: '$items.name', quantity: { $sum: '$items.quantity' }, revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } } } },
+      { $sort: { quantity: -1 } },
+      { $limit: 8 }
+    ]),
+    Order.aggregate([
+      { $match: match },
+      { $unwind: '$items' },
+      { $group: { _id: '$items.category', quantity: { $sum: '$items.quantity' }, revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } } } },
+      { $sort: { quantity: -1 } },
+      { $limit: 8 }
+    ]),
+    Order.aggregate([
+      { $match: match },
+      { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, revenue: { $sum: '$total' }, orders: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]),
+    Order.aggregate([
+      { $match: match },
+      { $group: { _id: { $hour: '$createdAt' }, orders: { $sum: 1 }, revenue: { $sum: '$total' } } },
+      { $sort: { _id: 1 } }
+    ]),
+    Invoice.find({ restaurant: restaurantId }).sort({ createdAt: -1 }).limit(8).lean(),
+    Customer.countDocuments({ restaurant: restaurantId }),
+    Invoice.aggregate([
+      { $match: invoiceMatch },
+      { $unwind: '$payments' },
+      { $group: { _id: '$payments.method', amount: { $sum: '$payments.amount' }, count: { $sum: 1 } } },
+      { $sort: { amount: -1 } }
+    ]),
+    Invoice.countDocuments({ ...invoiceMatch, paymentMode: 'partial' })
   ]);
-
-  const topItems = await Order.aggregate([
-    { $match: match },
-    { $unwind: '$items' },
-    { $group: { _id: '$items.name', quantity: { $sum: '$items.quantity' }, revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } } } },
-    { $sort: { quantity: -1 } },
-    { $limit: 8 }
-  ]);
-
-  const topCategories = await Order.aggregate([
-    { $match: match },
-    { $unwind: '$items' },
-    { $group: { _id: '$items.category', quantity: { $sum: '$items.quantity' }, revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } } } },
-    { $sort: { quantity: -1 } },
-    { $limit: 8 }
-  ]);
-
-  const salesTrend = await Order.aggregate([
-    { $match: match },
-    { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, revenue: { $sum: '$total' }, orders: { $sum: 1 } } },
-    { $sort: { _id: 1 } }
-  ]);
-
-  const peakHours = await Order.aggregate([
-    { $match: match },
-    { $group: { _id: { $hour: '$createdAt' }, orders: { $sum: 1 }, revenue: { $sum: '$total' } } },
-    { $sort: { _id: 1 } }
-  ]);
-
-  const [recentBills, customerCount] = await Promise.all([
-    Invoice.find({ restaurant: restaurantId }).sort({ createdAt: -1 }).limit(8),
-    Customer.countDocuments({ restaurant: restaurantId })
-  ]);
-
-  const paymentStats = await Invoice.aggregate([
-    { $match: invoiceMatch },
-    { $unwind: '$payments' },
-    { $group: { _id: '$payments.method', amount: { $sum: '$payments.amount' }, count: { $sum: 1 } } },
-    { $sort: { amount: -1 } }
-  ]);
-
-  const partialPayments = await Invoice.countDocuments({ ...invoiceMatch, paymentMode: 'partial' });
 
   return {
     revenue: summary?.revenue || 0,

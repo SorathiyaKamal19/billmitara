@@ -9,6 +9,6 @@ export const listCustomers = asyncHandler(async (req, res) => {
     const search = new RegExp(escapeRegex(q), 'i');
     query.$or = [{ name: search }, { mobile: search }];
   }
-  const customers = await Customer.find(query).sort({ totalSpending: -1 }).limit(100);
+  const customers = await Customer.find(query).sort({ totalSpending: -1 }).limit(100).lean();
   res.json(customers);
 });
