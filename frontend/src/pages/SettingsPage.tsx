@@ -40,6 +40,11 @@ export function SettingsPage() {
   async function submit(event?: FormEvent) {
     event?.preventDefault();
 
+    if ((settings.name || '').trim().length > 30) {
+      toast.error(t('Restaurant name must be 30 characters or less', 'Restaurant name must be 30 characters or less'));
+      return;
+    }
+
     const { data } = await api.patch(
       '/settings',
       settings
@@ -155,6 +160,7 @@ export function SettingsPage() {
                     className="input pl-10"
                     placeholder={t('રેસ્ટોરન્ટનું નામ', 'Restaurant name')}
                     value={settings.name || ''}
+                    maxLength={30}
                     onChange={(e) =>
                       setSettings({
                         ...settings,

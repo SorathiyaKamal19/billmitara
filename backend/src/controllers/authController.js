@@ -15,7 +15,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   phone: z.string().trim().min(6),
-  restaurantName: z.string().trim().min(2),
+  restaurantName: z.string().trim().min(2).max(30, 'Restaurant name must be 30 characters or less'),
   restaurantPhone: z.string().trim().optional(),
   restaurantAddress: z.string().trim().optional()
 });

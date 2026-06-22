@@ -4,7 +4,7 @@ import { Restaurant } from '../models/Restaurant.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const settingsSchema = z.object({
-  name: z.string().trim().min(1).optional(),
+  name: z.string().trim().min(1).max(30, 'Restaurant name must be 30 characters or less').optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
   gstNumber: z.string().optional(),

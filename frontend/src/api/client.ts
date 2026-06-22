@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { updateServerClock } from '../utils/serverClock';
 
 function getApiUrl() {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
@@ -62,10 +63,12 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => {
+    updateServerClock(response.headers['x-server-time']);
     stopRequestLoading();
     return response;
   },
   (error) => {
+    updateServerClock(error.response?.headers?.['x-server-time']);
     stopRequestLoading();
     if (error.response?.status === 401) {
       clearStoredAuth();
