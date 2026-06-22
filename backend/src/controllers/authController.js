@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { Restaurant } from '../models/Restaurant.js';
 import { User } from '../models/User.js';
@@ -89,10 +90,10 @@ export const login = asyncHandler(async (req, res) => {
   if (/^\d{10}$/.test(compactPhone)) phoneCandidates.add(`+91${compactPhone}`);
   const user = await User.findOne({
     $or: [{ email: identifier }, { phone: { $in: [...phoneCandidates] } }]
-  }).select('+password').populate('restaurant');
-  if (!user || !(await user.comparePassword(input.password))) throw new ApiError(401, 'Invalid login or password');
+  }).select('+password').populate('restaurant').lean();
+  if (!user || !(await bcrypt.compare(input.password, user.password))) throw new ApiError(401, 'Invalid login or password');
   if (!user.isActive) throw new ApiError(403, 'User is disabled');
-  const cleanUser = user.toObject();
+  const cleanUser = { ...user };
   delete cleanUser.password;
   res.json({ token: signToken(user), user: cleanUser });
 });

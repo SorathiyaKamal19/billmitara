@@ -6,7 +6,13 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 const tableSchema = z.object({ name: z.string().min(1), capacity: z.number().int().positive().default(4), zone: z.string().default('Main Floor') });
 
 export const listTables = asyncHandler(async (req, res) => {
-  const tables = await Table.find({ restaurant: req.user.restaurant }).populate('currentOrder').sort({ zone: 1, name: 1 });
+  const tables = await Table.find({ restaurant: req.user.restaurant })
+    .populate({
+      path: 'currentOrder',
+      select: 'type status tableName items total createdAt updatedAt'
+    })
+    .sort({ zone: 1, name: 1 })
+    .lean();
   res.json(tables);
 });
 

@@ -28,7 +28,7 @@ export const listMenu = asyncHandler(async (req, res) => {
   }
   const category = boundedQueryString(req.query.category);
   if (category) query.category = category;
-  const items = await MenuItem.find(query).sort({ category: 1, name: 1 });
+  const items = await MenuItem.find(query).sort({ category: 1, name: 1 }).lean();
   res.json(items);
 });
 
@@ -42,7 +42,7 @@ export const mostSellingMenu = asyncHandler(async (req, res) => {
     { $limit: 12 }
   ]);
   const ids = rows.map((row) => row._id).filter(Boolean);
-  const items = await MenuItem.find({ _id: { $in: ids }, restaurant: req.user.restaurant, isAvailable: true });
+  const items = await MenuItem.find({ _id: { $in: ids }, restaurant: req.user.restaurant, isAvailable: true }).lean();
   const rank = new Map(rows.map((row, index) => [String(row._id), index]));
   res.json(items.sort((a, b) => (rank.get(String(a._id)) ?? 999) - (rank.get(String(b._id)) ?? 999)));
 });

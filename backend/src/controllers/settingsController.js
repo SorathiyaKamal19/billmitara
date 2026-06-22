@@ -18,7 +18,7 @@ const settingsSchema = z.object({
 });
 
 export const getSettings = asyncHandler(async (req, res) => {
-  res.json(await Restaurant.findById(req.user.restaurant));
+  res.json(await Restaurant.findById(req.user.restaurant).lean());
 });
 
 export const updateSettings = asyncHandler(async (req, res) => {

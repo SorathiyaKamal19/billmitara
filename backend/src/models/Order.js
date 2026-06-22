@@ -46,4 +46,10 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+orderSchema.index({ restaurant: 1, createdAt: -1 });
+orderSchema.index({ restaurant: 1, status: 1, createdAt: -1 });
+orderSchema.index({ restaurant: 1, updatedAt: -1 });
+orderSchema.index({ restaurant: 1, type: 1, createdAt: -1 });
+orderSchema.index({ restaurant: 1, table: 1, status: 1 });
+
 export const Order = mongoose.model('Order', orderSchema);
