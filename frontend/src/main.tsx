@@ -30,6 +30,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage').then((module) => 
 const StaffPage = lazy(() => import('./pages/StaffPage').then((module) => ({ default: module.StaffPage })));
 const SubscriptionExpiredPage = lazy(() => import('./pages/SubscriptionExpiredPage').then((module) => ({ default: module.SubscriptionExpiredPage })));
 const SuperAdminPage = lazy(() => import('./pages/SuperAdminPage').then((module) => ({ default: module.SuperAdminPage })));
+const SupportPage = lazy(() => import('./pages/SupportPage').then((module) => ({ default: module.SupportPage })));
 const TablesPage = lazy(() => import('./pages/TablesPage').then((module) => ({ default: module.TablesPage })));
 
 if (localStorage.getItem('poss_theme') === 'dark') {
@@ -73,6 +74,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/staff" element={<ProtectedRoute roles={['owner']}><StaffPage /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/qr-menu" element={<ProtectedRoute roles={['owner', 'manager']}><QrMenuPage /></ProtectedRoute>} />
+                <Route path="/support" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']}><SupportPage /></ProtectedRoute>} />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
