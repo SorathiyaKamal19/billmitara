@@ -116,3 +116,13 @@ export interface Customer {
   totalSpending: number;
   lastVisitAt?: string;
 }
+
+export interface SupportTicket {
+  _id: string;
+  category: 'billing' | 'technical' | 'account' | 'feature' | 'other';
+  subject: string;
+  message: string;
+  notificationStatus: 'pending' | 'sent' | 'failed';
+  status: 'open' | 'closed';
+  createdAt: string;
+}

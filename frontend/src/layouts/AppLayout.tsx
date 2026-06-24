@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { BarChart3, ChefHat, ClipboardList, CreditCard, LayoutDashboard, LogOut, MenuSquare, Moon, Settings, Sun, Table2, UserCircle, UserCog, Users } from 'lucide-react';
+import { BarChart3, ChefHat, ClipboardList, CreditCard, LayoutDashboard, LifeBuoy, LogOut, MenuSquare, Moon, Settings, Sun, Table2, UserCircle, UserCog, Users } from 'lucide-react';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +18,7 @@ const nav: { to: string; labelGu: string; labelEn: string; icon: typeof LayoutDa
   { to: '/customers', labelGu: 'ગ્રાહકો', labelEn: 'Customers', icon: Users, roles: ['owner', 'manager'] },
   { to: '/settings', labelGu: 'સેટિંગ્સ', labelEn: 'Settings', icon: Settings, roles: ['owner'] },
   { to: '/staff', labelGu: 'Staff', labelEn: 'Staff', icon: UserCog, roles: ['owner'] },
+  { to: '/support', labelGu: 'Help', labelEn: 'Help & Support', icon: LifeBuoy, roles: ['owner', 'manager', 'waiter', 'chef'] },
   { to: '/profile', labelGu: 'Profile', labelEn: 'Profile', icon: UserCircle, roles: ['owner', 'manager', 'waiter', 'chef'] },
 ];
 
@@ -28,8 +29,8 @@ export function AppLayout() {
   const [dark, setDark] = useState(() => localStorage.getItem('poss_theme') === 'dark' || document.documentElement.classList.contains('dark'));
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const allowed = nav.filter((item) => item.roles.includes(user?.role || 'manager'));
-  const profileMenuItems = allowed.filter((item) => ['/staff', '/settings', '/customers'].includes(item.to));
-  const mobileAllowed = allowed.filter((item) => !['/menu', '/reports', '/profile', '/staff', '/settings', '/customers'].includes(item.to));
+  const profileMenuItems = allowed.filter((item) => ['/staff', '/settings', '/customers', '/support'].includes(item.to));
+  const mobileAllowed = allowed.filter((item) => !['/menu', '/reports', '/profile', '/staff', '/settings', '/customers', '/support'].includes(item.to));
   const restaurantName = user?.restaurant?.name || t('Restaurant', 'Restaurant');
   const currentYear = new Date().getFullYear();
 

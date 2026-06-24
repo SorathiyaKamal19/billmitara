@@ -6,7 +6,7 @@ let resend;
 
 function getResendClient() {
   if (!env.mail.resendApiKey) {
-    throw new ApiError(503, "Password reset email is not configured");
+    throw new ApiError(503, "Email service is not configured");
   }
 
   if (!resend) {
@@ -72,5 +72,58 @@ export async function sendPasswordResetOtp({ email, name, otp }) {
       throw new ApiError(502, `Could not send password reset email: ${details.message}`);
     }
     throw new ApiError(502, "Could not send password reset email");
+  }
+}
+
+export async function sendSupportRequestEmail({ ticket }) {
+  const safeName = escapeHtml(ticket.name || "Unknown user");
+  const safeEmail = escapeHtml(ticket.email || "No email");
+  const safePhone = escapeHtml(ticket.phone || "No phone");
+  const safeRestaurant = escapeHtml(ticket.restaurantName || "No restaurant");
+  const safeCategory = escapeHtml(ticket.category || "other");
+  const safeSubject = escapeHtml(ticket.subject);
+  const safeMessage = escapeHtml(ticket.message).replace(/\n/g, "<br />");
+  const supportTo = env.mail.supportTo;
+
+  if (!supportTo) {
+    throw new ApiError(503, "Support email recipient is not configured");
+  }
+
+  try {
+    const { error } = await getResendClient().emails.send({
+      from: env.mail.from,
+      to: supportTo,
+      subject: `BillMitara support: ${ticket.subject}`,
+      html: `
+        <div style="background:#f8fafc;padding:32px;font-family:Arial,sans-serif;color:#0f172a">
+          <div style="max-width:640px;margin:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:32px">
+            <p style="margin:0;color:#0f766e;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">BillMitara Help & Support</p>
+            <h1 style="margin:12px 0 8px;font-size:26px">${safeSubject}</h1>
+            <p style="margin:0 0 20px;color:#475569;line-height:1.6">A user submitted a new support query from the application.</p>
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:20px">
+              <p style="margin:0 0 8px"><strong>Name:</strong> ${safeName}</p>
+              <p style="margin:0 0 8px"><strong>Email:</strong> ${safeEmail}</p>
+              <p style="margin:0 0 8px"><strong>Phone:</strong> ${safePhone}</p>
+              <p style="margin:0 0 8px"><strong>Restaurant:</strong> ${safeRestaurant}</p>
+              <p style="margin:0"><strong>Category:</strong> ${safeCategory}</p>
+            </div>
+            <div style="border-left:4px solid #0f766e;padding-left:16px;color:#334155;line-height:1.7">${safeMessage}</div>
+          </div>
+        </div>
+      `,
+      text: `BillMitara support query\n\nSubject: ${ticket.subject}\nCategory: ${ticket.category}\nName: ${ticket.name}\nEmail: ${ticket.email || "No email"}\nPhone: ${ticket.phone || "No phone"}\nRestaurant: ${ticket.restaurantName || "No restaurant"}\n\n${ticket.message}`,
+    });
+
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    const details = resendErrorDetails(error);
+    console.error("Support email failed:", details);
+    if (error instanceof ApiError) throw error;
+    if (env.nodeEnv !== "production") {
+      throw new ApiError(502, `Could not send support email: ${details.message}`);
+    }
+    throw new ApiError(502, "Could not send support email");
   }
 }
