@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { SupportTicket } from '../models/SupportTicket.js';
+import { env } from '../config/env.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiError } from '../utils/apiError.js';
 import { sendSupportRequestEmail } from '../services/emailService.js';
 
 const supportRequestSchema = z.object({
@@ -25,6 +27,18 @@ export const listSupportTickets = asyncHandler(async (req, res) => {
 export const createSupportTicket = asyncHandler(async (req, res) => {
   const input = supportRequestSchema.parse(req.body);
   await req.user.populate('restaurant');
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const recentTicketCount = await SupportTicket.countDocuments({
+    createdBy: req.user._id,
+    createdAt: { $gte: since }
+  });
+
+  if (recentTicketCount >= env.support.dailyLimit) {
+    throw new ApiError(
+      429,
+      `We already received your support queries. Our team usually resolves queries within 2 days, so please wait before sending another message.`
+    );
+  }
 
   const ticket = await SupportTicket.create({
     restaurant: req.user.restaurant?._id,
