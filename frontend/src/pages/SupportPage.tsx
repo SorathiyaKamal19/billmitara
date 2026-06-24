@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { HelpCircle, MailCheck, RefreshCw, Send } from 'lucide-react';
+import { Clock, HelpCircle, MailCheck, RefreshCw, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as yup from 'yup';
 import { api } from '../api/client';
@@ -51,7 +51,7 @@ export function SupportPage() {
       const { data } = await api.post('/support', values);
       setTickets((current) => [data, ...current]);
       setForm(emptyForm);
-      toast.success('Support query sent');
+      toast.success('Support query sent. We usually resolve queries within 2 days.');
     } catch (error: any) {
       if (error.name === 'ValidationError') {
         toast.error(error.errors[0]);
@@ -75,6 +75,18 @@ export function SupportPage() {
           <RefreshCw size={17} className={loading ? 'animate-spin' : ''} />
           Refresh
         </button>
+      </div>
+
+      <div className="glass flex flex-col gap-3 rounded-lg p-4 sm:flex-row sm:items-center">
+        <div className="grid size-11 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+          <Clock size={21} />
+        </div>
+        <div>
+          <p className="font-black">Customer satisfaction matters to us.</p>
+          <p className="text-sm leading-6 text-gray-500">
+            We usually resolve support queries within 2 days. To avoid duplicate emails, each user can send up to 2 support queries in 24 hours.
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">

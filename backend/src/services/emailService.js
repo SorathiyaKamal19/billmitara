@@ -99,7 +99,7 @@ export async function sendSupportRequestEmail({ ticket }) {
           <div style="max-width:640px;margin:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:32px">
             <p style="margin:0;color:#0f766e;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">BillMitara Help & Support</p>
             <h1 style="margin:12px 0 8px;font-size:26px">${safeSubject}</h1>
-            <p style="margin:0 0 20px;color:#475569;line-height:1.6">A user submitted a new support query from the application.</p>
+            <p style="margin:0 0 20px;color:#475569;line-height:1.6">A user submitted a new support query from the application. The customer has been told that queries are usually resolved within 2 days.</p>
             <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:20px">
               <p style="margin:0 0 8px"><strong>Name:</strong> ${safeName}</p>
               <p style="margin:0 0 8px"><strong>Email:</strong> ${safeEmail}</p>
@@ -111,7 +111,7 @@ export async function sendSupportRequestEmail({ ticket }) {
           </div>
         </div>
       `,
-      text: `BillMitara support query\n\nSubject: ${ticket.subject}\nCategory: ${ticket.category}\nName: ${ticket.name}\nEmail: ${ticket.email || "No email"}\nPhone: ${ticket.phone || "No phone"}\nRestaurant: ${ticket.restaurantName || "No restaurant"}\n\n${ticket.message}`,
+      text: `BillMitara support query\n\nSubject: ${ticket.subject}\nCategory: ${ticket.category}\nName: ${ticket.name}\nEmail: ${ticket.email || "No email"}\nPhone: ${ticket.phone || "No phone"}\nRestaurant: ${ticket.restaurantName || "No restaurant"}\n\nThe customer has been told that queries are usually resolved within 2 days.\n\n${ticket.message}`,
     });
 
     if (error) {
