@@ -69,7 +69,7 @@ export function AppLayout() {
               </div>
             </NavLink>
           </div>
-          <nav className="mt-5 space-y-1">
+          <nav className="mt-5 flex-1 space-y-1 overflow-y-auto pr-1">
             {allowed.map(({ to, labelGu, labelEn, icon: Icon }) => (
               <NavLink
                 key={to}
@@ -86,7 +86,7 @@ export function AppLayout() {
               </NavLink>
             ))}
           </nav>
-          <div className="mt-auto space-y-3 mt-3">
+          <div className="mt-3 shrink-0 space-y-3 border-t border-gray-200 pt-3 dark:border-white/10">
             <div className="block rounded-lg border border-gray-200 bg-white p-3 transition hover:border-saffron/40 dark:border-white/10 dark:bg-white/10">
               <p className="text-sm font-bold">Bill Mitra App</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">Copyright {currentYear} Bill Mitra. All rights reserved.</p>
