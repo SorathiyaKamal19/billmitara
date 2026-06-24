@@ -28,6 +28,8 @@ const RegisterOwnerPage = lazy(() => import('./pages/RegisterOwnerPage').then((m
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((module) => ({ default: module.ReportsPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
 const StaffPage = lazy(() => import('./pages/StaffPage').then((module) => ({ default: module.StaffPage })));
+const SubscriptionExpiredPage = lazy(() => import('./pages/SubscriptionExpiredPage').then((module) => ({ default: module.SubscriptionExpiredPage })));
+const SuperAdminPage = lazy(() => import('./pages/SuperAdminPage').then((module) => ({ default: module.SuperAdminPage })));
 const TablesPage = lazy(() => import('./pages/TablesPage').then((module) => ({ default: module.TablesPage })));
 
 if (localStorage.getItem('poss_theme') === 'dark') {
@@ -36,6 +38,7 @@ if (localStorage.getItem('poss_theme') === 'dark') {
 
 function HomeRedirect() {
   const { user } = useAuth();
+  if (user?.role === 'superadmin') return <Navigate to="/superadmin" replace />;
   if (user?.role === 'owner') return <DashboardPage />;
   if (user?.role === 'chef') return <Navigate to="/kitchen" replace />;
   return <Navigate to="/tables" replace />;
@@ -51,7 +54,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               <Route path="/login" element={<LoginPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/register-owner" element={<RegisterOwnerPage />} />
+              <Route path="/subscription-expired" element={<SubscriptionExpiredPage />} />
               <Route path="/i/:code" element={<PublicInvoicePage />} />
+              <Route path="/superadmin" element={<ProtectedRoute roles={['superadmin']}><SuperAdminPage /></ProtectedRoute>} />
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route index element={<HomeRedirect />} />
                 <Route path="/tables" element={<ProtectedRoute roles={['owner', 'manager', 'waiter']}><TablesPage /></ProtectedRoute>} />

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { env } from './env.js';
 import { User } from '../models/User.js';
+import { ensureSubscriptionAccess } from '../middleware/auth.js';
 
 let ioInstance;
 
@@ -13,8 +14,10 @@ export function registerSocket(io) {
       if (!token) return next(new Error('Authentication required'));
 
       const decoded = jwt.verify(token, env.jwtSecret);
-      const user = await User.findById(decoded.id).select('role restaurant isActive');
-      if (!user || !user.isActive || !user.restaurant) return next(new Error('Invalid session'));
+      const user = await User.findById(decoded.id).select('role restaurant isActive isSubscribed');
+      if (!user || !user.isActive) return next(new Error('Invalid session'));
+      await ensureSubscriptionAccess(user);
+      if (!user.restaurant) return next(new Error('Invalid session'));
 
       socket.user = {
         id: String(user._id),
