@@ -36,6 +36,7 @@ async function seed() {
     { new: true, upsert: true }
   );
   const users = [
+    { name: 'Super Admin', email: env.seed.superadminEmail, password: env.seed.superadminPassword, role: 'superadmin', phone: env.seed.superadminPhone },
     { name: 'Owner Demo', email: env.seed.ownerEmail, password: env.seed.ownerPassword, role: 'owner', restaurant: restaurant._id, phone: '+919999999001' },
     { name: 'Manager Demo', email: 'manager@poss.local', password: 'Password@123', role: 'manager', restaurant: restaurant._id, phone: '+919999999002' },
     { name: 'Waiter Demo', email: 'waiter@poss.local', password: 'Password@123', role: 'waiter', restaurant: restaurant._id, phone: '+919999999003' },
@@ -57,6 +58,7 @@ async function seed() {
     await Table.findOneAndUpdate({ restaurant: restaurant._id, name: table.name }, table, { upsert: true });
   }
   console.log('Seed complete');
+  console.log(`Superadmin: ${env.seed.superadminEmail} / ${env.seed.superadminPassword}`);
   console.log(`Owner: ${env.seed.ownerEmail} / ${env.seed.ownerPassword}`);
   console.log('Manager: manager@poss.local / Password@123');
   console.log('Waiter: waiter@poss.local / Password@123');

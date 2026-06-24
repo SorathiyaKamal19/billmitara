@@ -7,6 +7,7 @@ import { menuRoutes } from './menuRoutes.js';
 import { orderRoutes } from './orderRoutes.js';
 import { settingsRoutes } from './settingsRoutes.js';
 import { staffRoutes } from './staffRoutes.js';
+import { superadminRoutes } from './superadminRoutes.js';
 import { tableRoutes } from './tableRoutes.js';
 
 export const apiRoutes = Router();
@@ -20,4 +21,5 @@ apiRoutes.use('/menu', menuRoutes);
 apiRoutes.use('/orders', orderRoutes);
 apiRoutes.use('/settings', settingsRoutes);
 apiRoutes.use('/staff', staffRoutes);
+apiRoutes.use('/superadmin', superadminRoutes);
 apiRoutes.use('/tables', tableRoutes);

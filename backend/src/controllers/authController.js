@@ -9,6 +9,7 @@ import { env } from '../config/env.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/apiError.js';
 import { sendPasswordResetOtp } from '../services/emailService.js';
+import { ensureSubscriptionAccess } from '../middleware/auth.js';
 
 const loginSchema = z.object({ identifier: z.string().trim().min(1), password: z.string().min(8) });
 const registerSchema = z.object({
@@ -93,6 +94,7 @@ export const login = asyncHandler(async (req, res) => {
   }).select('+password').populate('restaurant').lean();
   if (!user || !(await bcrypt.compare(input.password, user.password))) throw new ApiError(401, 'Invalid login or password');
   if (!user.isActive) throw new ApiError(403, 'User is disabled');
+  await ensureSubscriptionAccess(user);
   const cleanUser = { ...user };
   delete cleanUser.password;
   res.json({ token: signToken(user), user: cleanUser });
@@ -116,7 +118,8 @@ export const registerOwner = asyncHandler(async (req, res) => {
     password: input.password,
     phone: input.phone,
     role: 'owner',
-    restaurant: restaurant._id
+    restaurant: restaurant._id,
+    isSubscribed: true
   });
 
   await user.populate('restaurant');

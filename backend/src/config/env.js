@@ -47,7 +47,10 @@ export const env = {
   slowRequestMs: numberEnv(process.env.SLOW_REQUEST_MS, 1000),
   seed: {
     ownerEmail: process.env.SEED_OWNER_EMAIL || 'owner@poss.local',
-    ownerPassword: process.env.SEED_OWNER_PASSWORD || 'Password@123'
+    ownerPassword: process.env.SEED_OWNER_PASSWORD || 'Password@123',
+    superadminEmail: process.env.SEED_SUPERADMIN_EMAIL || 'superadmin@poss.local',
+    superadminPassword: process.env.SEED_SUPERADMIN_PASSWORD || 'Password@123',
+    superadminPhone: process.env.SEED_SUPERADMIN_PHONE || '+919999999000'
   }
 };
 

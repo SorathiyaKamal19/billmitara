@@ -1,4 +1,4 @@
-export type Role = 'owner' | 'manager' | 'waiter' | 'chef';
+export type Role = 'superadmin' | 'owner' | 'manager' | 'waiter' | 'chef';
 
 export interface Restaurant {
   _id: string;
@@ -20,9 +20,10 @@ export interface User {
   name: string;
   email: string;
   role: Role;
-  restaurant: Restaurant;
+  restaurant?: Restaurant;
   phone?: string;
   isActive?: boolean;
+  isSubscribed?: boolean;
 }
 
 export interface MenuItem {

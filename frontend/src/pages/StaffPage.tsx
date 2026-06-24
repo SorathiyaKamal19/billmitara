@@ -7,7 +7,7 @@ import { Role, User } from '../types';
 import { PasswordInput } from '../components/PasswordInput';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 
-type StaffRole = Exclude<Role, 'owner'>;
+type StaffRole = Exclude<Role, 'superadmin' | 'owner'>;
 
 const emptyForm = {
   name: '',

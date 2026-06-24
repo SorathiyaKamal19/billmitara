@@ -73,6 +73,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       clearStoredAuth();
     }
+    if (error.response?.status === 402 && typeof window !== 'undefined' && window.location.pathname !== '/subscription-expired') {
+      window.location.assign('/subscription-expired');
+    }
     return Promise.reject(error);
   }
 );
