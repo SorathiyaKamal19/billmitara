@@ -9,6 +9,7 @@ const styles: Record<string, string> = {
   'in-kitchen': 'bg-amber-100 text-amber-800',
   ready: 'bg-emerald-100 text-emerald-700',
   billed: 'bg-gray-100 text-gray-700',
+  cancelled: 'bg-rose-100 text-rose-700',
   'dine-in': 'bg-blue-100 text-blue-700',
   takeaway: 'bg-pink-100 text-pink-700'
 };

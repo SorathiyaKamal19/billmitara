@@ -68,7 +68,7 @@ export const listOrders = asyncHandler(async (req, res) => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     query.updatedAt = { $gte: start };
-    query.status = { $in: ['ready', 'billed'] };
+    query.status = { $in: ['ready', 'billed', 'cancelled'] };
   }
   if (req.query.status) query.status = req.query.status;
   if (req.query.type) query.type = req.query.type;
@@ -128,7 +128,7 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
     status: z.enum(['running', 'in-kitchen', 'ready', 'billed', 'cancelled']),
     reason: z.string().trim().optional()
   }).parse(req.body);
-  const order = await Order.findOne({ _id: req.params.id, restaurant: req.user.restaurant }).lean();
+  const order = await Order.findOne({ _id: req.params.id, restaurant: req.user.restaurant });
   if (!order) throw new ApiError(404, 'Order not found');
   if (order.status === 'billed') throw new ApiError(400, 'Billed orders cannot be cancelled');
   if (order.status === 'cancelled') throw new ApiError(400, 'Order is already cancelled');

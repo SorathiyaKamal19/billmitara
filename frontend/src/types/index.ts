@@ -38,6 +38,12 @@ export interface MenuItem {
   prepTimeMinutes: number;
 }
 
+export interface MenuCategory {
+  _id: string;
+  name: string;
+  itemCount: number;
+}
+
 export interface RestaurantTable {
   _id: string;
   name: string;
