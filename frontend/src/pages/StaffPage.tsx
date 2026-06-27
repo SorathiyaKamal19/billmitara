@@ -6,6 +6,7 @@ import { api } from '../api/client';
 import { Role, User } from '../types';
 import { PasswordInput } from '../components/PasswordInput';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useLanguage } from '../context/LanguageContext';
 
 type StaffRole = Exclude<Role, 'superadmin' | 'owner'>;
 
@@ -18,20 +19,8 @@ const emptyForm = {
   isActive: true
 };
 
-const staffSchema = yup.object({
-  name: yup.string().trim().min(2, 'Name is too short').required('Name is required'),
-  email: yup.string().trim().email('Enter a valid email').optional(),
-  password: yup.string().when('$editing', {
-    is: true,
-    then: (schema) => schema.optional(),
-    otherwise: (schema) => schema.min(8, 'Password must be at least 8 characters').required('Password is required')
-  }),
-  phone: yup.string().trim().min(6, 'Enter a valid mobile number').required('Mobile number is required'),
-  role: yup.mixed<StaffRole>().oneOf(['manager', 'waiter', 'chef']).required('Role is required'),
-  isActive: yup.boolean().required()
-});
-
 export function StaffPage() {
+  const { t } = useLanguage();
   const [staff, setStaff] = useState<User[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -41,6 +30,36 @@ export function StaffPage() {
   const [deleting, setDeleting] = useState(false);
 
   const editing = useMemo(() => staff.find((user) => user._id === editingId), [editingId, staff]);
+  const staffSchema = useMemo(
+    () =>
+      yup.object({
+        name: yup.string().trim().min(2, t('નામ ખૂબ ટૂંકું છે', 'Name is too short')).required(t('નામ જરૂરી છે', 'Name is required')),
+        email: yup.string().trim().email(t('માન્ય ઇમેઇલ દાખલ કરો', 'Enter a valid email')).optional(),
+        password: yup.string().when('$editing', {
+          is: true,
+          then: (schema) => schema.optional(),
+          otherwise: (schema) =>
+            schema
+              .min(8, t('પાસવર્ડ ઓછામાં ઓછા 8 અક્ષરનો હોવો જોઈએ', 'Password must be at least 8 characters'))
+              .required(t('પાસવર્ડ જરૂરી છે', 'Password is required'))
+        }),
+        phone: yup.string().trim().min(6, t('માન્ય મોબાઇલ નંબર દાખલ કરો', 'Enter a valid mobile number')).required(t('મોબાઇલ નંબર જરૂરી છે', 'Mobile number is required')),
+        role: yup.mixed<StaffRole>().oneOf(['manager', 'waiter', 'chef']).required(t('ભૂમિકા જરૂરી છે', 'Role is required')),
+        isActive: yup.boolean().required()
+      }),
+    [t]
+  );
+
+  function roleLabel(role: Role) {
+    const labels: Partial<Record<Role, string>> = {
+      manager: t('મેનેજર', 'Manager'),
+      waiter: t('વેઇટર', 'Waiter'),
+      chef: t('શેફ', 'Chef'),
+      owner: t('માલિક', 'Owner'),
+      superadmin: t('સુપર એડમિન', 'Super admin')
+    };
+    return labels[role] || role;
+  }
 
   async function loadStaff() {
     setLoading(true);
@@ -48,7 +67,7 @@ export function StaffPage() {
       const { data } = await api.get('/staff');
       setStaff(data);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Could not load staff');
+      toast.error(error.response?.data?.message || t('સ્ટાફ લોડ થઈ શક્યો નહીં', 'Could not load staff'));
     } finally {
       setLoading(false);
     }
@@ -94,13 +113,13 @@ export function StaffPage() {
       setStaff((current) =>
         editingId ? current.map((user) => (user._id === editingId ? data : user)) : [...current, data]
       );
-      toast.success(editingId ? 'Staff account updated' : 'Staff account created');
+      toast.success(editingId ? t('સ્ટાફ એકાઉન્ટ અપડેટ થયું', 'Staff account updated') : t('સ્ટાફ એકાઉન્ટ બન્યું', 'Staff account created'));
       resetForm();
     } catch (error: any) {
       if (error.name === 'ValidationError') {
         toast.error(error.errors[0]);
       } else {
-        toast.error(error.response?.data?.message || 'Could not save staff account');
+        toast.error(error.response?.data?.message || t('સ્ટાફ એકાઉન્ટ સાચવી શકાયું નહીં', 'Could not save staff account'));
       }
     } finally {
       setSaving(false);
@@ -113,11 +132,11 @@ export function StaffPage() {
     try {
       await api.delete(`/staff/${userToDelete._id}`);
       setStaff((current) => current.filter((row) => row._id !== userToDelete._id));
-      toast.success('Staff account deleted');
+      toast.success(t('સ્ટાફ એકાઉન્ટ કાઢી નાખ્યું', 'Staff account deleted'));
       if (editingId === userToDelete._id) resetForm();
       setUserToDelete(null);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Could not delete staff account');
+      toast.error(error.response?.data?.message || t('સ્ટાફ એકાઉન્ટ કાઢી શકાયું નહીં', 'Could not delete staff account'));
     } finally {
       setDeleting(false);
     }
@@ -127,12 +146,12 @@ export function StaffPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-wider text-saffron">Owner module</p>
-          <h1 className="text-3xl font-black tracking-tight">Staff accounts</h1>
-          <p className="mt-1 text-sm text-gray-500">Create, edit, disable, or delete manager, waiter, and chef accounts.</p>
+          <p className="text-sm font-bold uppercase tracking-wider text-saffron">{t('માલિક મોડ્યુલ', 'Owner module')}</p>
+          <h1 className="text-3xl font-black tracking-tight">{t('સ્ટાફ એકાઉન્ટ્સ', 'Staff accounts')}</h1>
+          <p className="mt-1 text-sm text-gray-500">{t('મેનેજર, વેઇટર અને શેફ એકાઉન્ટ બનાવો, સંપાદિત કરો, બંધ કરો અથવા કાઢી નાખો.', 'Create, edit, disable, or delete manager, waiter, and chef accounts.')}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-black dark:border-white/10 dark:bg-white/10">
-          {staff.length} staff
+          {staff.length} {t('સ્ટાફ', 'staff')}
         </div>
       </div>
 
@@ -144,8 +163,8 @@ export function StaffPage() {
                 {editing ? <Edit3 /> : <Plus />}
               </div>
               <div>
-                <p className="text-xl font-black">{editing ? 'Edit staff' : 'Create staff'}</p>
-                <p className="text-sm text-gray-500">{editing ? editing.name : 'Add a new account under this owner'}</p>
+                <p className="text-xl font-black">{editing ? t('સ્ટાફ સંપાદિત કરો', 'Edit staff') : t('સ્ટાફ બનાવો', 'Create staff')}</p>
+                <p className="text-sm text-gray-500">{editing ? editing.name : t('આ માલિક હેઠળ નવું એકાઉન્ટ ઉમેરો', 'Add a new account under this owner')}</p>
               </div>
             </div>
             {editing && (
@@ -157,45 +176,45 @@ export function StaffPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">Name</span>
+              <span className="mb-2 block text-sm font-bold">{t('નામ', 'Name')}</span>
               <input className="input" value={form.name} onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))} required />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">Phone</span>
+              <span className="mb-2 block text-sm font-bold">{t('ફોન', 'Phone')}</span>
               <input className="input" value={form.phone} onChange={(e) => setForm((current) => ({ ...current, phone: e.target.value }))} required disabled={Boolean(editingId)} />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">Email optional</span>
+              <span className="mb-2 block text-sm font-bold">{t('ઇમેઇલ વૈકલ્પિક', 'Email optional')}</span>
               <input className="input" type="email" value={form.email} onChange={(e) => setForm((current) => ({ ...current, email: e.target.value }))} disabled={Boolean(editingId)} />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{editing ? 'New password' : 'Password'}</span>
-              <PasswordInput value={form.password} onChange={(e) => setForm((current) => ({ ...current, password: e.target.value }))} minLength={8} required={!editing} placeholder={editing ? 'Leave blank to keep current' : ''} />
+              <span className="mb-2 block text-sm font-bold">{editing ? t('નવો પાસવર્ડ', 'New password') : t('પાસવર્ડ', 'Password')}</span>
+              <PasswordInput value={form.password} onChange={(e) => setForm((current) => ({ ...current, password: e.target.value }))} minLength={8} required={!editing} placeholder={editing ? t('હાલનો પાસવર્ડ રાખવા ખાલી રાખો', 'Leave blank to keep current') : ''} />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">Role</span>
+              <span className="mb-2 block text-sm font-bold">{t('ભૂમિકા', 'Role')}</span>
               <select className="input" value={form.role} onChange={(e) => setForm((current) => ({ ...current, role: e.target.value as StaffRole }))}>
-                <option value="manager">Manager</option>
-                <option value="waiter">Waiter</option>
-                <option value="chef">Chef</option>
+                <option value="manager">{t('મેનેજર', 'Manager')}</option>
+                <option value="waiter">{t('વેઇટર', 'Waiter')}</option>
+                <option value="chef">{t('શેફ', 'Chef')}</option>
               </select>
             </label>
             <label className="flex items-center gap-3  px-3 py-3 text-sm font-bold dark:border-white/10 dark:bg-white/10 mt-4">
               <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((current) => ({ ...current, isActive: e.target.checked }))} />
-              Active account
+              {t('સક્રિય એકાઉન્ટ', 'Active account')}
             </label>
           </div>
 
           <button disabled={saving} className="btn-primary mt-5">
             <Save size={17} />
-            {saving ? 'Saving...' : editing ? 'Save changes' : 'Create account'}
+            {saving ? t('સાચવી રહ્યું છે...', 'Saving...') : editing ? t('ફેરફારો સાચવો', 'Save changes') : t('એકાઉન્ટ બનાવો', 'Create account')}
           </button>
         </form>
 
         <div className="glass overflow-hidden rounded-xl p-0">
           <div className="flex items-center gap-3 border-b border-gray-200 p-4 dark:border-white/10">
             <UsersRound className="text-saffron" />
-            <p className="font-black">Your staff</p>
+            <p className="font-black">{t('તમારો સ્ટાફ', 'Your staff')}</p>
           </div>
           <div className="divide-y divide-gray-200 dark:divide-white/10">
             {staff.map((user) => (
@@ -203,10 +222,10 @@ export function StaffPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-black">{user.name}</p>
-                    <span className="rounded-lg bg-gray-100 px-2 py-1 text-xs font-bold capitalize text-gray-600 dark:bg-white/10 dark:text-gray-300">{user.role}</span>
-                    {user.isActive === false && <span className="rounded-lg bg-red-50 px-2 py-1 text-xs font-bold text-red-600">Disabled</span>}
+                    <span className="rounded-lg bg-gray-100 px-2 py-1 text-xs font-bold text-gray-600 dark:bg-white/10 dark:text-gray-300">{roleLabel(user.role)}</span>
+                    {user.isActive === false && <span className="rounded-lg bg-red-50 px-2 py-1 text-xs font-bold text-red-600">{t('બંધ', 'Disabled')}</span>}
                   </div>
-                  <p className="mt-1 truncate text-sm text-gray-500">{user.email || 'No email'}{user.phone ? ` - ${user.phone}` : ''}</p>
+                  <p className="mt-1 truncate text-sm text-gray-500">{user.email || t('ઇમેઇલ નથી', 'No email')}{user.phone ? ` - ${user.phone}` : ''}</p>
                 </div>
                 <div className="flex gap-2">
                   <button className="btn-soft" onClick={() => editUser(user)}>
@@ -219,25 +238,26 @@ export function StaffPage() {
               </div>
             ))}
             {!loading && !staff.length && (
-              <div className="p-8 text-center text-sm font-bold text-gray-500">No staff accounts yet.</div>
+              <div className="p-8 text-center text-sm font-bold text-gray-500">{t('હજુ સુધી કોઈ સ્ટાફ એકાઉન્ટ નથી.', 'No staff accounts yet.')}</div>
             )}
             {loading && (
-              <div className="p-8 text-center text-sm font-bold text-gray-500">Loading staff...</div>
+              <div className="p-8 text-center text-sm font-bold text-gray-500">{t('સ્ટાફ લોડ થઈ રહ્યો છે...', 'Loading staff...')}</div>
             )}
           </div>
         </div>
       </div>
       {userToDelete && (
         <ConfirmDialog
-          title="Delete staff account?"
+          title={t('સ્ટાફ એકાઉન્ટ કાઢી નાખવું છે?', 'Delete staff account?')}
           description={
             <>
               <p className="font-bold text-gray-950 dark:text-white">{userToDelete.name}</p>
-              <p className="mt-2">This staff member will no longer be able to sign in.</p>
+              <p className="mt-2">{t('આ સ્ટાફ સભ્ય હવે સાઇન ઇન કરી શકશે નહીં.', 'This staff member will no longer be able to sign in.')}</p>
             </>
           }
-          confirmLabel="Delete"
-          loadingLabel="Deleting..."
+          confirmLabel={t('કાઢી નાખો', 'Delete')}
+          loadingLabel={t('કાઢી રહ્યું છે...', 'Deleting...')}
+          cancelLabel={t('રદ કરો', 'Cancel')}
           loading={deleting}
           danger
           onConfirm={removeUser}

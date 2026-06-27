@@ -61,6 +61,17 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+
+#reports-datepicker-root {
+  position: relative;
+  z-index: 90;
+}
+
+#reports-datepicker-root .reports-datepicker-popper,
+.react-datepicker-popper.reports-datepicker-popper {
+  z-index: 90;
+}
+
 .h-97{
   height: 25rem;
 }

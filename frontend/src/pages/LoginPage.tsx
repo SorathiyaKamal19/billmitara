@@ -47,6 +47,7 @@ export function LoginPage() {
         localStorage.removeItem(REMEMBER_IDENTIFIER_KEY);
       }
       await login(values.identifier, values.password, rememberMe);
+      toast.success(t('લૉગિન સફળ થયું', 'Login successful'));
       navigate('/');
     } catch (error: any) {
       if (error.name === 'ValidationError') {
