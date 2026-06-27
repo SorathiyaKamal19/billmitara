@@ -3,6 +3,7 @@ import { MenuItem } from '../models/MenuItem.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/apiError.js';
 import { boundedQueryString, escapeRegex } from '../utils/security.js';
+import { assertMenuCategoryExists } from './menuCategoryController.js';
 
 const menuSchema = z.object({
   name: z.string().min(2),
@@ -49,6 +50,7 @@ export const mostSellingMenu = asyncHandler(async (req, res) => {
 
 export const createMenuItem = asyncHandler(async (req, res) => {
   const input = menuSchema.parse(req.body);
+  await assertMenuCategoryExists(req.user.restaurant, input.category);
   const duplicateQuery = {
     restaurant: req.user.restaurant,
     name: new RegExp(`^${escapeRegex(input.name)}$`, 'i')
@@ -68,6 +70,7 @@ export const createMenuItem = asyncHandler(async (req, res) => {
 
 export const updateMenuItem = asyncHandler(async (req, res) => {
   const input = menuSchema.partial().parse(req.body);
+  if (input.category) await assertMenuCategoryExists(req.user.restaurant, input.category);
   if (input.name) {
     const duplicate = await MenuItem.findOne({
       _id: { $ne: req.params.id },

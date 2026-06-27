@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Clock, History, X } from "lucide-react";
+import { CheckCircle2, Clock, History, X, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { api } from "../api/client";
 import { OrderTimer } from "../components/OrderTimer";
@@ -9,6 +9,20 @@ import { useLanguage } from "../context/LanguageContext";
 import { useSocket } from "../hooks/useSocket";
 import { Order } from "../types";
 import { formatOrderTime } from "../utils/format";
+
+const DISMISSED_CANCELLED_KITCHEN_ORDERS_KEY = "poss_dismissed_cancelled_kitchen_orders";
+
+function getDismissedCancelledOrderIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(DISMISSED_CANCELLED_KITCHEN_ORDERS_KEY) || "[]") as string[]);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function saveDismissedCancelledOrderIds(ids: Set<string>) {
+  localStorage.setItem(DISMISSED_CANCELLED_KITCHEN_ORDERS_KEY, JSON.stringify(Array.from(ids)));
+}
 
 export function KitchenPage() {
   const { user } = useAuth();
@@ -26,7 +40,13 @@ export function KitchenPage() {
       api.get("/orders?kitchenHistory=today&limit=100"),
     ]);
 
-    setOrders(activeRes.data);
+    const dismissedCancelledOrderIds = getDismissedCancelledOrderIds();
+    const activeOrders = activeRes.data as Order[];
+    const cancelledAlerts = (historyRes.data as Order[]).filter(
+      (order) => order.status === "cancelled" && !dismissedCancelledOrderIds.has(order._id),
+    );
+
+    setOrders([...cancelledAlerts, ...activeOrders]);
     setHistory(historyRes.data);
   }
 
@@ -36,13 +56,23 @@ export function KitchenPage() {
 
   useEffect(() => {
     const onOrder = (order: Order) => {
-      setOrders((current) =>
-        [order, ...current.filter((row) => row._id !== order._id)].filter(
-          (row) => row.status === "in-kitchen",
-        ),
-      );
+      setOrders((current) => {
+        const withoutOrder = current.filter((row) => row._id !== order._id);
+        const dismissedCancelledOrderIds = getDismissedCancelledOrderIds();
+        if (order.status === "in-kitchen") return [order, ...withoutOrder];
+        if (order.status === "cancelled" && !dismissedCancelledOrderIds.has(order._id)) return [order, ...withoutOrder];
+        return withoutOrder;
+      });
 
-      toast.success(t("નવો રસોડાનો ઓર્ડર", "New kitchen order"));
+      if (["ready", "billed", "cancelled"].includes(order.status)) {
+        setHistory((current) => [order, ...current.filter((row) => row._id !== order._id)]);
+      }
+
+      if (order.status === "in-kitchen") {
+        toast.success(t("નવો રસોડાનો ઓર્ડર", "New kitchen order"));
+      } else if (order.status === "cancelled") {
+        toast.error(t("ઓર્ડર રદ થયો", "Order cancelled"));
+      }
     };
 
     socket.on("order:new", onOrder);
@@ -62,6 +92,14 @@ export function KitchenPage() {
     setOrders((rows) => rows.filter((row) => row._id !== order._id));
     setHistory((rows) => [{ ...order, status: "ready" }, ...rows]);
     toast.success(t("ઓર્ડર તૈયાર તરીકે માર્ક કર્યો", "Order marked ready"));
+  }
+
+  function clearCancelledOrder(orderId: string) {
+    const dismissedCancelledOrderIds = getDismissedCancelledOrderIds();
+    dismissedCancelledOrderIds.add(orderId);
+    saveDismissedCancelledOrderIds(dismissedCancelledOrderIds);
+    setOrders((rows) => rows.filter((row) => row._id !== orderId));
+    toast.success(t("રદ થયેલો ઓર્ડર સાફ કર્યો", "Cancelled order cleared"));
   }
 
   return (
@@ -90,68 +128,121 @@ export function KitchenPage() {
       </div>
 
       <div className="grid items-start gap-4 md:grid-cols-2 2xl:grid-cols-3">
-        {orders.map((order) => (
-          <div
-            key={order._id}
-            className="glass flex h-[32rem] min-h-0 flex-col overflow-hidden rounded-xl border-emerald-100 p-0 shadow-sm dark:border-emerald-500/20 sm:h-[25rem]"
-          >
-            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-gray-200 bg-white/70 p-3 dark:border-white/10 dark:bg-white/5">
-              <div className="min-w-0">
-                <p className="truncate text-xl font-black sm:text-2xl">
-                  {order.type === "dine-in"
-                    ? order.tableName
-                    : t("પાર્સલ ઓર્ડર", "Parcel order")}
-                </p>
-                <p className="mt-1 truncate text-sm text-gray-500">
-                  {order.customerName || t("મહેમાન", "Guest")}
-                  {order.customerMobile ? ` · ${order.customerMobile}` : ""}
-                </p>
-              </div>
-              <StatusBadge value={order.type} />
-            </div>
+        {orders.map((order) => {
+          const isCancelled = order.status === "cancelled";
 
-            <div className="shrink-0 border-b border-gray-200 bg-emerald-50/70 px-4 py-3 dark:border-white/10 dark:bg-emerald-500/10">
-              <OrderTimer orderId={order._id} createdAt={order.createdAt} status={order.status} compact />
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              <div className="space-y-3">
-                {order.items.map((item) => (
-                  <div
-                    key={item._id || item.name}
-                    className="rounded-lg border border-gray-100 bg-white/90 p-3 dark:border-white/10 dark:bg-white/10 sm:p-2"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="min-w-0 text-base font-black sm:text-lg">{item.name}</p>
-                      <span className="shrink-0 rounded-lg bg-emerald-50 px-2.5 py-1 text-xl font-black text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 sm:text-l">
-                        x{item.quantity}
-                      </span>
-                    </div>
-                    {item.note && (
-                      <p className="mt-1 text-sm text-gray-500">{item.note}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {order.notes && (
-              <div className="mx-4 mb-3 max-h-16 shrink-0 overflow-y-auto rounded-lg border border-amber-100 bg-amber-50 p-3 text-sm font-semibold text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
-                {order.notes}
-              </div>
-            )}
-
-            {canUpdateKitchen && (
-              <button
-                className="mx-4 mb-4 mt-auto inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-                onClick={() => markReady(order)}
+          return (
+            <div
+              key={order._id}
+              className={`glass flex h-[32rem] min-h-0 flex-col overflow-hidden rounded-xl p-0 shadow-sm sm:h-[25rem] ${
+                isCancelled
+                  ? "border-rose-200 bg-rose-50/90 dark:border-rose-500/30 dark:bg-rose-950/20"
+                  : "border-emerald-100 dark:border-emerald-500/20"
+              }`}
+            >
+              <div
+                className={`flex shrink-0 items-start justify-between gap-4 border-b p-3 ${
+                  isCancelled
+                    ? "border-rose-200 bg-rose-100/80 dark:border-rose-500/20 dark:bg-rose-500/10"
+                    : "border-gray-200 bg-white/70 dark:border-white/10 dark:bg-white/5"
+                }`}
               >
-                <CheckCircle2 size={18} />
-                {t("તૈયાર તરીકે માર્ક કરો", "Mark Ready")}
-              </button>
-            )}
-          </div>
-        ))}
+                <div className="min-w-0">
+                  <p className="truncate text-xl font-black sm:text-2xl">
+                    {order.type === "dine-in"
+                      ? order.tableName
+                      : t("પાર્સલ ઓર્ડર", "Parcel order")}
+                  </p>
+                  <p className={`mt-1 truncate text-sm ${isCancelled ? "text-rose-700 dark:text-rose-200" : "text-gray-500"}`}>
+                    {order.customerName || t("મહેમાન", "Guest")}
+                    {order.customerMobile ? ` · ${order.customerMobile}` : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <StatusBadge value={order.type} />
+                  {isCancelled && <StatusBadge value={order.status} />}
+                </div>
+              </div>
+
+              {isCancelled ? (
+                <div className="shrink-0 border-b border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-200">
+                  <div className="flex items-start gap-2">
+                    <XCircle size={18} className="mt-0.5 shrink-0" />
+                    <div className="min-w-0">
+                      <p>{t("આ ઓર્ડર રદ થયો છે", "This order was cancelled")}</p>
+                      {order.cancellationReason && (
+                        <p className="mt-1 break-words text-xs font-semibold opacity-85">
+                          {order.cancellationReason}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="shrink-0 border-b border-gray-200 bg-emerald-50/70 px-4 py-3 dark:border-white/10 dark:bg-emerald-500/10">
+                  <OrderTimer orderId={order._id} createdAt={order.createdAt} status={order.status} compact />
+                </div>
+              )}
+
+              <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                <div className="space-y-3">
+                  {order.items.map((item) => (
+                    <div
+                      key={item._id || item.name}
+                      className={`rounded-lg border p-3 sm:p-2 ${
+                        isCancelled
+                          ? "border-rose-100 bg-white/90 dark:border-rose-500/20 dark:bg-white/10"
+                          : "border-gray-100 bg-white/90 dark:border-white/10 dark:bg-white/10"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="min-w-0 text-base font-black sm:text-lg">{item.name}</p>
+                        <span
+                          className={`shrink-0 rounded-lg px-2.5 py-1 text-xl font-black sm:text-l ${
+                            isCancelled
+                              ? "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-200"
+                              : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                          }`}
+                        >
+                          x{item.quantity}
+                        </span>
+                      </div>
+                      {item.note && (
+                        <p className="mt-1 text-sm text-gray-500">{item.note}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {order.notes && !isCancelled && (
+                <div className="mx-4 mb-3 max-h-16 shrink-0 overflow-y-auto rounded-lg border border-amber-100 bg-amber-50 p-3 text-sm font-semibold text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                  {order.notes}
+                </div>
+              )}
+
+              {isCancelled ? (
+                <button
+                  className="mx-4 mb-4 mt-auto inline-flex shrink-0 self-start items-center justify-center gap-2 rounded-lg bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700"
+                  onClick={() => clearCancelledOrder(order._id)}
+                >
+                  <XCircle size={18} />
+                  {t("રસોડામાંથી સાફ કરો", "Clear from kitchen")}
+                </button>
+              ) : (
+                canUpdateKitchen && (
+                  <button
+                    className="mx-4 mb-4 mt-auto inline-flex shrink-0 self-start items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                    onClick={() => markReady(order)}
+                  >
+                    <CheckCircle2 size={18} />
+                    {t("તૈયાર તરીકે માર્ક કરો", "Mark Ready")}
+                  </button>
+                )
+              )}
+            </div>
+          );
+        })}
 
         {!orders.length && (
           <div className="glass rounded-xl border-emerald-100 p-10 text-center md:col-span-2 2xl:col-span-3">
@@ -179,7 +270,7 @@ export function KitchenPage() {
               {t("રસોડાનો ઇતિહાસ", "Kitchen History")}
             </h2>
             <p className="mt-1 text-sm leading-5 text-gray-500 dark:text-gray-400">
-              {t("આજના પૂર્ણ થયેલા ઓર્ડર", "Today's completed orders")}
+              {t("આજના પૂર્ણ અથવા રદ થયેલા ઓર્ડર", "Today's completed or cancelled orders")}
             </p>
           </div>
 
