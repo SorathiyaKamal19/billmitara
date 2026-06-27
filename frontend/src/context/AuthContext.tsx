@@ -24,6 +24,7 @@ interface RegisterOwnerInput {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const TOKEN_KEY = 'poss_token';
 const USER_KEY = 'poss_user';
+const WELCOME_MODAL_KEY = 'poss_show_welcome_modal';
 
 function getStoredValue(key: string) {
   return localStorage.getItem(key) ?? sessionStorage.getItem(key);
@@ -69,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function registerOwner(input: RegisterOwnerInput) {
     const { data } = await api.post('/auth/register-owner', input);
     saveAuth(data.token, data.user, true);
+    localStorage.setItem(WELCOME_MODAL_KEY, 'true');
     setToken(data.token);
     setUser(data.user);
   }
