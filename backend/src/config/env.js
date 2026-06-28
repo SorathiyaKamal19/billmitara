@@ -55,7 +55,8 @@ export const env = {
     superadminName: process.env.SEED_SUPERADMIN_NAME || 'Super Admin',
     superadminEmail: process.env.SEED_SUPERADMIN_EMAIL || 'superadmin@poss.local',
     superadminPassword: process.env.SEED_SUPERADMIN_PASSWORD || 'Password@123',
-    superadminPhone: process.env.SEED_SUPERADMIN_PHONE || '+919999999000'
+    superadminPhone: process.env.SEED_SUPERADMIN_PHONE || '+919999999000',
+    createSuperadminOnStart: booleanEnv(process.env.CREATE_SUPERADMIN_ON_START)
   }
 };
 

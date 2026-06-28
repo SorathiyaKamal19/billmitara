@@ -6,9 +6,14 @@ import { connectDB } from './config/db.js';
 import { registerSocket } from './config/socket.js';
 import { startKeepAliveCron } from './services/keepAliveService.js';
 import { startSupportReminderCron } from './services/supportReminderService.js';
+import { ensureSuperadmin } from './services/superadminService.js';
 
 async function bootstrap() {
   await connectDB();
+  if (env.seed.createSuperadminOnStart) {
+    const superadmin = await ensureSuperadmin();
+    console.log(`Superadmin ready on startup: ${superadmin.email}`);
+  }
   const app = createApp();
   const server = http.createServer(app);
   const io = new Server(server, {
