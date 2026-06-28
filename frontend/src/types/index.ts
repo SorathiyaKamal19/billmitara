@@ -125,10 +125,18 @@ export interface Customer {
 
 export interface SupportTicket {
   _id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  restaurantName?: string;
   category: 'billing' | 'technical' | 'account' | 'feature' | 'other';
   subject: string;
   message: string;
   notificationStatus: 'pending' | 'sent' | 'failed';
+  notificationError?: string;
   status: 'open' | 'closed';
+  lastReminderAt?: string;
+  reminderCount?: number;
+  closedAt?: string;
   createdAt: string;
 }

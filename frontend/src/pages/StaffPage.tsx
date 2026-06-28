@@ -205,10 +205,12 @@ export function StaffPage() {
             </label>
           </div>
 
-          <button disabled={saving} className="btn-primary mt-5">
-            <Save size={17} />
-            {saving ? t('સાચવી રહ્યું છે...', 'Saving...') : editing ? t('ફેરફારો સાચવો', 'Save changes') : t('એકાઉન્ટ બનાવો', 'Create account')}
-          </button>
+          <div className="mt-5 flex justify-end">
+            <button disabled={saving} className="btn-primary">
+              <Save size={17} />
+              {saving ? t('સાચવી રહ્યું છે...', 'Saving...') : editing ? t('ફેરફારો સાચવો', 'Save changes') : t('એકાઉન્ટ બનાવો', 'Create account')}
+            </button>
+          </div>
         </form>
 
         <div className="glass overflow-hidden rounded-xl p-0">

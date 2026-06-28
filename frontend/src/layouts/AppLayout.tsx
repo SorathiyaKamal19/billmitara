@@ -109,7 +109,7 @@ const nav: {
     labelGu: "મદદ અને સપોર્ટ",
     labelEn: "Help & Support",
     icon: LifeBuoy,
-    roles: ["owner", "manager", "waiter", "chef"],
+    roles: ["owner"],
   },
   {
     to: "/profile",

@@ -5,6 +5,7 @@ import { env } from './config/env.js';
 import { connectDB } from './config/db.js';
 import { registerSocket } from './config/socket.js';
 import { startKeepAliveCron } from './services/keepAliveService.js';
+import { startSupportReminderCron } from './services/supportReminderService.js';
 
 async function bootstrap() {
   await connectDB();
@@ -17,6 +18,7 @@ async function bootstrap() {
   server.listen(env.port, () => {
     console.log(`POSS API running on http://localhost:${env.port}`);
     startKeepAliveCron();
+    startSupportReminderCron();
   });
 }
 

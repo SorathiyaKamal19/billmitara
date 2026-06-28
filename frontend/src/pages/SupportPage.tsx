@@ -167,10 +167,12 @@ export function SupportPage() {
             </label>
           </div>
 
-          <button className="btn-primary mt-5" disabled={saving}>
-            <Send size={17} />
-            {saving ? t('મોકલી રહ્યું છે...', 'Sending...') : t('પ્રશ્ન મોકલો', 'Send query')}
-          </button>
+          <div className="mt-5 flex justify-end">
+            <button className="btn-primary" disabled={saving}>
+              <Send size={17} />
+              {saving ? t('મોકલી રહ્યું છે...', 'Sending...') : t('પ્રશ્ન મોકલો', 'Send query')}
+            </button>
+          </div>
         </form>
 
         <div className="glass overflow-hidden rounded-lg">

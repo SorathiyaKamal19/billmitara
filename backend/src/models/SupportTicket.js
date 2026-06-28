@@ -13,7 +13,11 @@ const supportTicketSchema = new mongoose.Schema(
     message: { type: String, required: true, trim: true, maxlength: 2000 },
     notificationStatus: { type: String, enum: ['pending', 'sent', 'failed'], default: 'pending' },
     notificationError: String,
-    status: { type: String, enum: ['open', 'closed'], default: 'open' }
+    status: { type: String, enum: ['open', 'closed'], default: 'open' },
+    closedAt: Date,
+    closedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    lastReminderAt: Date,
+    reminderCount: { type: Number, default: 0 }
   },
   { timestamps: true }
 );
@@ -21,5 +25,6 @@ const supportTicketSchema = new mongoose.Schema(
 supportTicketSchema.index({ restaurant: 1, createdAt: -1 });
 supportTicketSchema.index({ createdBy: 1, createdAt: -1 });
 supportTicketSchema.index({ status: 1, createdAt: -1 });
+supportTicketSchema.index({ status: 1, lastReminderAt: 1, createdAt: 1 });
 
 export const SupportTicket = mongoose.model('SupportTicket', supportTicketSchema);

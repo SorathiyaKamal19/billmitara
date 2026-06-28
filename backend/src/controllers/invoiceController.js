@@ -73,8 +73,7 @@ function publicInvoicePayload(invoice, order, restaurant) {
 export const createInvoice = asyncHandler(async (req, res) => {
   const order = await Order.findOne({ _id: req.params.orderId, restaurant: req.user.restaurant });
   if (!order) return res.status(404).json({ message: 'Order not found' });
-  const mobile = (req.body.customerMobile || order.customerMobile || '').trim();
-  if (!mobile) return res.status(400).json({ message: 'Customer mobile is required to finalize the bill' });
+  const mobile = (req.body.customerMobile ?? order.customerMobile ?? '').trim();
   const payments = req.body.payments?.length ? req.body.payments : [{ method: req.body.paymentMode || 'cash', amount: order.total || 0 }];
   if (payments.some((payment) => payment.method === 'card')) return res.status(400).json({ message: 'Card payment is not available' });
   const paid = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);

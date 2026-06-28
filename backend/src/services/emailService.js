@@ -127,3 +127,57 @@ export async function sendSupportRequestEmail({ ticket }) {
     throw new ApiError(502, "Could not send support email");
   }
 }
+
+export async function sendSupportReminderEmail({ ticket }) {
+  const safeName = escapeHtml(ticket.name || "Unknown user");
+  const safeEmail = escapeHtml(ticket.email || "No email");
+  const safePhone = escapeHtml(ticket.phone || "No phone");
+  const safeRestaurant = escapeHtml(ticket.restaurantName || "No restaurant");
+  const safeCategory = escapeHtml(ticket.category || "other");
+  const safeSubject = escapeHtml(ticket.subject);
+  const safeMessage = escapeHtml(ticket.message).replace(/\n/g, "<br />");
+  const ticketKey = `SUP-${String(ticket._id).slice(-6).toUpperCase()}`;
+  const supportTo = env.mail.supportTo;
+
+  if (!supportTo) {
+    throw new ApiError(503, "Support email recipient is not configured");
+  }
+
+  try {
+    const { error } = await getResendClient().emails.send({
+      from: env.mail.from,
+      to: supportTo,
+      subject: `Reminder: unresolved BillMitara support ticket ${ticketKey}`,
+      html: `
+        <div style="background:#f8fafc;padding:32px;font-family:Arial,sans-serif;color:#0f172a">
+          <div style="max-width:640px;margin:auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:32px">
+            <p style="margin:0;color:#dc2626;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Unresolved Support Reminder</p>
+            <h1 style="margin:12px 0 8px;font-size:26px">${ticketKey}: ${safeSubject}</h1>
+            <p style="margin:0 0 20px;color:#475569;line-height:1.6">This ticket is still open. Close it in the admin panel after the query is solved to stop reminder emails.</p>
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:18px;margin-bottom:20px">
+              <p style="margin:0 0 8px"><strong>Name:</strong> ${safeName}</p>
+              <p style="margin:0 0 8px"><strong>Email:</strong> ${safeEmail}</p>
+              <p style="margin:0 0 8px"><strong>Phone:</strong> ${safePhone}</p>
+              <p style="margin:0 0 8px"><strong>Restaurant:</strong> ${safeRestaurant}</p>
+              <p style="margin:0"><strong>Category:</strong> ${safeCategory}</p>
+            </div>
+            <div style="border-left:4px solid #dc2626;padding-left:16px;color:#334155;line-height:1.7">${safeMessage}</div>
+          </div>
+        </div>
+      `,
+      text: `Unresolved BillMitara support reminder\n\nTicket: ${ticketKey}\nSubject: ${ticket.subject}\nCategory: ${ticket.category}\nName: ${ticket.name}\nEmail: ${ticket.email || "No email"}\nPhone: ${ticket.phone || "No phone"}\nRestaurant: ${ticket.restaurantName || "No restaurant"}\n\nClose this ticket in the admin panel after it is solved to stop reminder emails.\n\n${ticket.message}`,
+    });
+
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    const details = resendErrorDetails(error);
+    console.error("Support reminder email failed:", details);
+    if (error instanceof ApiError) throw error;
+    if (env.nodeEnv !== "production") {
+      throw new ApiError(502, `Could not send support reminder email: ${details.message}`);
+    }
+    throw new ApiError(502, "Could not send support reminder email");
+  }
+}

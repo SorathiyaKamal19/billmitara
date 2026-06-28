@@ -315,11 +315,10 @@ export async function buildInvoicePdfBuffer(invoice, order, restaurant) {
 export async function createInvoiceForOrder(orderId, { sendWhatsApp = true, paymentMode = 'cash', payments = [], customerMobile } = {}) {
   const order = await Order.findById(orderId);
   if (!order) throw new Error('Order not found');
-  if (customerMobile?.trim()) {
+  if (customerMobile !== undefined) {
     order.customerMobile = customerMobile.trim();
     await order.save();
   }
-  if (!order.customerMobile?.trim()) throw new Error('Customer mobile is required to finalize the bill');
   const restaurant = await Restaurant.findById(order.restaurant);
   const billNumber = await nextBillNumber(restaurant);
   const publicCode = await nextPublicCode();
