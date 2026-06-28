@@ -66,3 +66,15 @@ export const createSupportTicket = asyncHandler(async (req, res) => {
 
   res.status(201).json(ticket);
 });
+
+export const closeSupportTicket = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findById(req.params.id);
+  if (!ticket) throw new ApiError(404, 'Support ticket not found');
+  if (ticket.status !== 'closed') {
+    ticket.status = 'closed';
+    ticket.closedAt = new Date();
+    ticket.closedBy = req.user._id;
+    await ticket.save();
+  }
+  res.json(ticket);
+});

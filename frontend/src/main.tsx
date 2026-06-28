@@ -74,7 +74,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/staff" element={<ProtectedRoute roles={['owner']}><StaffPage /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/qr-menu" element={<ProtectedRoute roles={['owner', 'manager']}><QrMenuPage /></ProtectedRoute>} />
-                <Route path="/support" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']}><SupportPage /></ProtectedRoute>} />
+                <Route path="/support" element={<ProtectedRoute roles={['owner']}><SupportPage /></ProtectedRoute>} />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Routes>

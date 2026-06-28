@@ -88,17 +88,26 @@ function CategoryCombobox({
   );
 }
 
+type MenuForm = {
+  name: string;
+  code: string;
+  category: string;
+  price: number;
+  foodType: MenuItem["foodType"] | "";
+  imageUrl: string;
+};
+
 export function MenuPage() {
   const { t } = useLanguage();
   const [items, setItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
 
-  const defaultForm = {
+  const defaultForm: MenuForm = {
     name: "",
     code: "",
     category: "",
     price: 0,
-    foodType: "veg" as const,
+    foodType: "",
     imageUrl: "",
   };
 
@@ -124,6 +133,22 @@ export function MenuPage() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (!form.name.trim()) {
+      toast.error(t("Please enter item name", "Please enter item name"));
+      return;
+    }
+    if (!form.code.trim()) {
+      toast.error(t("Please enter item code", "Please enter item code"));
+      return;
+    }
+    if (form.price <= 0) {
+      toast.error(t("Please enter price", "Please enter price"));
+      return;
+    }
+    if (!form.foodType) {
+      toast.error(t("Please select food type", "Please select food type"));
+      return;
+    }
     if (!form.category) {
       toast.error(t("કેટેગરી પસંદ કરો", "Please select a category"));
       return;
@@ -200,6 +225,22 @@ export function MenuPage() {
 
   async function updateItem() {
     if (!editItem) return;
+    if (!editItem.name.trim()) {
+      toast.error(t("Please enter item name", "Please enter item name"));
+      return;
+    }
+    if (!editItem.code?.trim()) {
+      toast.error(t("Please enter item code", "Please enter item code"));
+      return;
+    }
+    if (editItem.price <= 0) {
+      toast.error(t("Please enter price", "Please enter price"));
+      return;
+    }
+    if (!editItem.foodType) {
+      toast.error(t("Please select food type", "Please select food type"));
+      return;
+    }
     if (!editItem.category) {
       toast.error(t("કેટેગરી પસંદ કરો", "Please select a category"));
       return;
@@ -257,6 +298,7 @@ export function MenuPage() {
             placeholder={t("વસ્તુ કોડ", "Item code")}
             value={form.code}
             onChange={(e) => setForm({ ...form, code: e.target.value })}
+            required
           />
 
           <CategoryCombobox
@@ -287,6 +329,7 @@ export function MenuPage() {
                   });
                 }
               }}
+              required
               className="h-11 w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition placeholder:text-gray-400 focus:border-saffron focus:ring-4 focus:ring-saffron/20 dark:border-white/10 dark:bg-white/10 dark:text-white"
             />
           </div>
@@ -297,10 +340,12 @@ export function MenuPage() {
             onChange={(e) =>
               setForm({
                 ...form,
-                foodType: e.target.value as any,
+                foodType: e.target.value as MenuForm["foodType"],
               })
             }
+            required
           >
+            <option value="" disabled>{t("Food type", "Food type")}</option>
             <option value="veg">{t("વેજ", "Veg")}</option>
             <option value="egg">{t("ઈંડા", "Egg")}</option>
             <option value="non-veg">{t("નોન-વેજ", "Non-Veg")}</option>
@@ -477,18 +522,20 @@ export function MenuPage() {
                     name: e.target.value,
                   })
                 }
+                required
               />
 
               <input
                 className="input w-full"
                 placeholder={t("વસ્તુ કોડ", "Item code")}
-                value={editItem.code}
+                value={editItem.code || ""}
                 onChange={(e) =>
                   setEditItem({
                     ...editItem,
                     code: e.target.value,
                   })
                 }
+                required
               />
 
               <CategoryCombobox
@@ -526,6 +573,7 @@ export function MenuPage() {
                       });
                     }
                   }}
+                  required
                 />
               </div>
 
@@ -535,9 +583,10 @@ export function MenuPage() {
                 onChange={(e) =>
                   setEditItem({
                     ...editItem,
-                    foodType: e.target.value as any,
+                    foodType: e.target.value as MenuItem["foodType"],
                   })
                 }
+                required
               >
                 <option value="veg">{t("વેજ", "Veg")}</option>
                 <option value="egg">{t("ઈંડા", "Egg")}</option>

@@ -203,10 +203,12 @@ export function OrderComposer({
           total={totals.total}
           totalLabel={t('કુલ', 'Total')}
         />
-        <button className="btn-primary mt-5 w-fit px-4">
-          <Send size={18} />
-          {existingOrderId ? t('વસ્તુઓ રસોડામાં ઉમેરો', 'Add Items to Kitchen') : t('રસોડામાં મોકલો', 'Send to Kitchen')}
-        </button>
+        <div className="mt-5 flex justify-end">
+          <button className="btn-primary w-fit px-4">
+            <Send size={18} />
+            {existingOrderId ? t('વસ્તુઓ રસોડામાં ઉમેરો', 'Add Items to Kitchen') : t('રસોડામાં મોકલો', 'Send to Kitchen')}
+          </button>
+        </div>
       </aside>
     </form>
   );

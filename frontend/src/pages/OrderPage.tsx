@@ -8,6 +8,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { api } from '../api/client';
 import { Order } from '../types';
 import { money, shortDate } from '../utils/format';
+import { useSocket } from '../hooks/useSocket';
 
 export function OrderPage() {
   const { tableId } = useParams();
@@ -18,6 +19,7 @@ export function OrderPage() {
   const [showComposer, setShowComposer] = useState(Boolean(tableId));
   const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
   const existingOrderId = searchParams.get('orderId');
+  const socket = useSocket();
 
   async function load() {
     const res = await api.get('/orders?limit=100');
@@ -27,6 +29,27 @@ export function OrderPage() {
   useEffect(() => {
     if (!tableId) load();
   }, [tableId]);
+
+  useEffect(() => {
+    if (tableId) return;
+
+    function onOrderUpdated(updatedOrder: Order) {
+      setOrders((current) => {
+        if (['billed', 'cancelled'].includes(updatedOrder.status)) {
+          return current.filter((order) => order._id !== updatedOrder._id);
+        }
+
+        const exists = current.some((order) => order._id === updatedOrder._id);
+        if (!exists) return [updatedOrder, ...current];
+        return current.map((order) => (order._id === updatedOrder._id ? updatedOrder : order));
+      });
+    }
+
+    socket.on('order:updated', onOrderUpdated);
+    return () => {
+      socket.off('order:updated', onOrderUpdated);
+    };
+  }, [socket, tableId]);
 
   if (!tableId && !showComposer) {
     return (

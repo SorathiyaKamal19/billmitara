@@ -103,10 +103,12 @@ export function ProfilePage() {
               <span className="mb-2 block text-sm font-bold">Mobile</span>
               <input className="input" value={user?.phone || ''} disabled />
             </label>
-            <button disabled={savingProfile} className="btn-primary">
-              <Save size={17} />
-              {savingProfile ? 'Saving...' : 'Save profile'}
-            </button>
+            <div className="flex justify-end">
+              <button disabled={savingProfile} className="btn-primary">
+                <Save size={17} />
+                {savingProfile ? 'Saving...' : 'Save profile'}
+              </button>
+            </div>
           </div>
         </form>
 
@@ -133,10 +135,12 @@ export function ProfilePage() {
               <span className="mb-2 block text-sm font-bold">Confirm password</span>
               <PasswordInput value={passwords.confirmPassword} onChange={(e) => setPasswords((current) => ({ ...current, confirmPassword: e.target.value }))} minLength={8} autoComplete="new-password" required />
             </label>
-            <button disabled={savingPassword} className="btn-primary">
-              <KeyRound size={17} />
-              {savingPassword ? 'Changing...' : 'Change password'}
-            </button>
+            <div className="flex justify-end">
+              <button disabled={savingPassword} className="btn-primary">
+                <KeyRound size={17} />
+                {savingPassword ? 'Changing...' : 'Change password'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

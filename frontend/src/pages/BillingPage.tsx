@@ -105,7 +105,6 @@ export function BillingPage() {
   async function bill() {
     if (!order) return;
     const mobile = billingMobile.trim();
-    if (!mobile) return toast.error(t("બિલ પૂર્ણ કરવા માટે મોબાઇલ નંબર જરૂરી છે", "Customer mobile is required to finalize the bill"));
     const paymentRows =
       paymentMode === "partial"
         ? Object.entries(payments)
@@ -117,7 +116,7 @@ export function BillingPage() {
       return toast.error(t("પેમેન્ટ રકમ બિલના કુલ સાથે મળવી જોઈએ", "Payment amount must match bill total"));
     try {
       const { data } = await api.post(`/invoices/order/${orderId}`, {
-        sendWhatsApp: true,
+        sendWhatsApp: Boolean(mobile),
         paymentMode,
         payments: paymentRows,
         customerMobile: mobile,
@@ -131,7 +130,9 @@ export function BillingPage() {
         ? `WhatsApp failed: ${data.whatsappReason}`
         : data.whatsappShareUrl
           ? "WhatsApp opened"
-        : `WhatsApp: ${data.whatsappStatus}`;
+          : mobile
+            ? `WhatsApp: ${data.whatsappStatus}`
+            : "WhatsApp not sent: no mobile number";
       toast.success(`${t("બિલ બન્યું", "Bill generated")}. ${whatsappMessage}`);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || t("બિલ બનાવી શકાયું નહીં", "Could not generate bill"));
@@ -398,7 +399,7 @@ export function BillingPage() {
             </div>
           ))}
         </div>
-        <div className="no-print mb-5 mt-2 flex flex-wrap gap-3">
+        <div className="no-print mb-5 mt-2 flex flex-wrap justify-end gap-3">
           {!editMode ? (
             <button className="btn-soft" onClick={() => setEditMode(true)}>
               <Pencil size={17} />
@@ -406,10 +407,6 @@ export function BillingPage() {
             </button>
           ) : (
             <>
-              <button className="btn-primary" onClick={saveChanges}>
-                <Save size={17} />
-                {t("ફેરફારો સાચવો", "Save changes")}
-              </button>
               <button
                 className="btn-soft"
                 onClick={() => {
@@ -422,6 +419,10 @@ export function BillingPage() {
               >
                 <X size={17} />
                 {t("રદ કરો", "Cancel")}
+              </button>
+              <button className="btn-primary" onClick={saveChanges}>
+                <Save size={17} />
+                {t("ફેરફારો સાચવો", "Save changes")}
               </button>
             </>
           )}
@@ -461,7 +462,7 @@ export function BillingPage() {
       <aside className="no-print glass h-fit rounded-lg p-5">
         <h2 className="text-xl font-black">{t("બિલ ક્રિયાઓ", "Bill actions")}</h2>
         <p className="mt-2 text-sm text-gray-500">
-          {t("PDF અને WhatsApp બિલ બનાવવા પહેલાં પેમેન્ટ અને મોબાઇલ નંબર જરૂરી છે.", "Payment and mobile number are required before PDF and WhatsApp bill generation.")}
+          {t("Payment confirmation is required before PDF bill generation. Add a mobile number only if you want to send the bill on WhatsApp.", "Payment confirmation is required before PDF bill generation. Add a mobile number only if you want to send the bill on WhatsApp.")}
         </p>
         <button
           className="btn-primary mt-5 w-full"
@@ -543,14 +544,13 @@ export function BillingPage() {
             </p>
             <label className="mt-4 block">
               <span className="mb-1 block text-sm font-bold">
-                {t("ગ્રાહકનું મોબાઇલ", "Customer mobile")} *
+                {t("Customer mobile", "Customer mobile")} ({t("Optional", "Optional")})
               </span>
               <input
                 className="input"
                 placeholder={t("10 અંકનો મોબાઇલ નંબર", "10-digit mobile number")}
                 value={billingMobile}
                 onChange={(e) => setBillingMobile(e.target.value)}
-                required
               />
             </label>
             <div className="mt-4 grid grid-cols-3 gap-2">
@@ -594,7 +594,7 @@ export function BillingPage() {
                 </p>
               </div>
             )}
-            <div className="mt-5 flex flex-col-reverse gap-3 border-t border-gray-200 pt-4 dark:border-white/10 sm:flex-row sm:justify-end">
+            <div className="mt-5 flex flex-wrap justify-end gap-3 border-t border-gray-200 pt-4 dark:border-white/10">
               <button
                 className="btn-soft"
                 onClick={() => setShowPayment(false)}

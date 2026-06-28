@@ -4,11 +4,11 @@ const menuItemSchema = new mongoose.Schema(
   {
     restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true, index: true },
     name: { type: String, required: true, trim: true },
-    code: { type: String, trim: true, uppercase: true },
+    code: { type: String, required: true, trim: true, uppercase: true },
     category: { type: String, required: true, trim: true },
-    price: { type: Number, required: true, min: 0 },
+    price: { type: Number, required: true, min: 1 },
     imageUrl: String,
-    foodType: { type: String, enum: ['veg', 'non-veg', 'egg'], default: 'veg' },
+    foodType: { type: String, enum: ['veg', 'non-veg', 'egg'], required: true },
     isAvailable: { type: Boolean, default: true },
     prepTimeMinutes: { type: Number, default: 12 },
     sku: String

@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { createSupportTicket, listSupportTickets } from '../controllers/supportController.js';
-import { protect } from '../middleware/auth.js';
+import { closeSupportTicket, createSupportTicket, listSupportTickets } from '../controllers/supportController.js';
+import { authorize, protect } from '../middleware/auth.js';
 
 export const supportRoutes = Router();
 
 supportRoutes.use(protect);
-supportRoutes.get('/', listSupportTickets);
-supportRoutes.post('/', createSupportTicket);
+supportRoutes.get('/', authorize('owner', 'superadmin'), listSupportTickets);
+supportRoutes.post('/', authorize('owner'), createSupportTicket);
+supportRoutes.patch('/:id/close', authorize('superadmin'), closeSupportTicket);

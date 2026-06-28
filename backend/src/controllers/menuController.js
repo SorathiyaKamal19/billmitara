@@ -6,12 +6,12 @@ import { boundedQueryString, escapeRegex } from '../utils/security.js';
 import { assertMenuCategoryExists } from './menuCategoryController.js';
 
 const menuSchema = z.object({
-  name: z.string().min(2),
-  code: z.string().optional().or(z.literal('')),
-  category: z.string().min(2),
-  price: z.number().nonnegative(),
+  name: z.string().trim().min(2, 'Item name is required'),
+  code: z.string().trim().min(1, 'Item code is required'),
+  category: z.string().trim().min(2, 'Category is required'),
+  price: z.number().positive('Price must be greater than 0'),
   imageUrl: z.string().optional().or(z.literal('')),
-  foodType: z.enum(['veg', 'non-veg', 'egg']).default('veg'),
+  foodType: z.enum(['veg', 'non-veg', 'egg'], { required_error: 'Food type is required' }),
   isAvailable: z.boolean().optional(),
   prepTimeMinutes: z.number().int().nonnegative().optional()
 });
