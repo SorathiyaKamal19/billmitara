@@ -1,16 +1,16 @@
 import { Router } from 'express';
 import { createMenuCategory, deleteMenuCategory, listMenuCategories, updateMenuCategory } from '../controllers/menuCategoryController.js';
 import { createMenuItem, deleteMenuItem, listMenu, mostSellingMenu, updateMenuItem } from '../controllers/menuController.js';
-import { authorize, protect } from '../middleware/auth.js';
+import { authorizePermission, protect } from '../middleware/auth.js';
 
 export const menuRoutes = Router();
 menuRoutes.use(protect);
 menuRoutes.get('/', listMenu);
-menuRoutes.get('/categories', authorize('owner', 'manager'), listMenuCategories);
-menuRoutes.get('/most-selling', authorize('owner', 'manager'), mostSellingMenu);
-menuRoutes.post('/categories', authorize('owner'), createMenuCategory);
-menuRoutes.patch('/categories/:id', authorize('owner'), updateMenuCategory);
-menuRoutes.delete('/categories/:id', authorize('owner'), deleteMenuCategory);
-menuRoutes.post('/', authorize('owner'), createMenuItem);
-menuRoutes.patch('/:id', authorize('owner'), updateMenuItem);
-menuRoutes.delete('/:id', authorize('owner'), deleteMenuItem);
+menuRoutes.get('/categories', authorizePermission('menu', 'orders', 'parcel', 'kitchen', 'billing'), listMenuCategories);
+menuRoutes.get('/most-selling', authorizePermission('menu', 'orders', 'parcel', 'kitchen', 'billing'), mostSellingMenu);
+menuRoutes.post('/categories', authorizePermission('menu'), createMenuCategory);
+menuRoutes.patch('/categories/:id', authorizePermission('menu'), updateMenuCategory);
+menuRoutes.delete('/categories/:id', authorizePermission('menu'), deleteMenuCategory);
+menuRoutes.post('/', authorizePermission('menu'), createMenuItem);
+menuRoutes.patch('/:id', authorizePermission('menu'), updateMenuItem);
+menuRoutes.delete('/:id', authorizePermission('menu'), deleteMenuItem);

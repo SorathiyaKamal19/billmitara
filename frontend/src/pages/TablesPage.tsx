@@ -10,6 +10,7 @@ import { RestaurantTable } from "../types";
 import { money } from "../utils/format";
 import { useAuth } from "../context/AuthContext";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { hasModulePermission } from "../utils/permissions";
 
 function tableTone(status: RestaurantTable["status"]) {
   if (status === "running") return "border-red-200 bg-red-50/80 dark:border-red-500/30 dark:bg-red-950/30";
@@ -22,7 +23,9 @@ export function TablesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
-  const canManageTables = user?.role === "owner" || user?.role === "manager";
+  const canManageTables = (user?.role === "owner" || user?.role === "manager") && hasModulePermission(user, "tables");
+  const canOpenOrders = hasModulePermission(user, "orders");
+  const canOpenBilling = hasModulePermission(user, "billing");
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [name, setName] = useState("");
   const [capacity, setCapacity] = useState<number | "">("");
@@ -133,20 +136,22 @@ export function TablesPage() {
                 )}
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                  {table.currentOrder && (
+                  {table.currentOrder && canOpenOrders && (
                     <button onClick={() => navigate(`/order-details/${table.currentOrder!._id}`)} className="btn-soft col-span-2">
                       <Eye size={17} /> {t("View order", "View order")}
                     </button>
                   )}
 
-                  <button
-                    onClick={() => navigate(table.currentOrder ? `/orders/${table._id}?orderId=${table.currentOrder._id}` : `/orders/${table._id}`)}
-                    className={table.currentOrder ? "btn-soft" : "btn-soft col-span-2"}
-                  >
-                    <PlusCircle size={17} /> {table.currentOrder ? t("Add items", "Add items") : t("Create order", "Create order")}
-                  </button>
+                  {canOpenOrders && (
+                    <button
+                      onClick={() => navigate(table.currentOrder ? `/orders/${table._id}?orderId=${table.currentOrder._id}` : `/orders/${table._id}`)}
+                      className={table.currentOrder && canOpenBilling ? "btn-soft" : "btn-soft col-span-2"}
+                    >
+                      <PlusCircle size={17} /> {table.currentOrder ? t("Add items", "Add items") : t("Create order", "Create order")}
+                    </button>
+                  )}
 
-                  {table.currentOrder && (
+                  {table.currentOrder && canOpenBilling && (
                     <button disabled={!table.currentOrder} onClick={() => table.currentOrder && navigate(`/billing/${table.currentOrder._id}`)} className="btn-primary">
                       <CreditCard size={17} /> {t("Bill", "Bill")}
                     </button>

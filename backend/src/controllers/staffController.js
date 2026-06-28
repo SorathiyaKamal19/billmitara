@@ -4,6 +4,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/apiError.js';
 
 const staffRoleSchema = z.enum(['manager', 'waiter', 'chef']);
+const permissionSchema = z.enum(['tables', 'orders', 'parcel', 'kitchen', 'billing', 'menu', 'reports', 'customers', 'settings', 'staff']);
 
 const createStaffSchema = z.object({
   name: z.string().trim().min(2),
@@ -11,12 +12,14 @@ const createStaffSchema = z.object({
   password: z.string().min(8),
   phone: z.string().trim().min(6),
   role: staffRoleSchema,
+  permissions: z.array(permissionSchema).default([]),
   isActive: z.boolean().optional()
 });
 const updateStaffSchema = z.object({
   name: z.string().trim().min(2).optional(),
   password: z.string().min(8).optional(),
   role: staffRoleSchema.optional(),
+  permissions: z.array(permissionSchema).optional(),
   isActive: z.boolean().optional()
 });
 
@@ -64,7 +67,7 @@ export const updateStaff = asyncHandler(async (req, res) => {
   const user = await User.findOne(staffQuery(req, req.params.id)).select('+password');
   if (!user) throw new ApiError(404, 'Staff account not found');
 
-  for (const field of ['name', 'role', 'isActive']) {
+  for (const field of ['name', 'role', 'permissions', 'isActive']) {
     if (input[field] !== undefined) user[field] = input[field];
   }
   if (input.password) user.password = input.password;

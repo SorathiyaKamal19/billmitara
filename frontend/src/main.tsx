@@ -7,6 +7,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { AppLoader } from './components/AppLoader';
 import { GlobalLoadingIndicator } from './components/GlobalLoadingIndicator';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { firstAccessiblePath, hasModulePermission } from './utils/permissions';
 import './index.css';
 
 const AppLayout = lazy(() => import('./layouts/AppLayout').then((module) => ({ default: module.AppLayout })));
@@ -41,8 +42,8 @@ function HomeRedirect() {
   const { user } = useAuth();
   if (user?.role === 'superadmin') return <Navigate to="/superadmin" replace />;
   if (user?.role === 'owner') return <DashboardPage />;
-  if (user?.role === 'chef') return <Navigate to="/kitchen" replace />;
-  return <Navigate to="/tables" replace />;
+  if (hasModulePermission(user, 'tables')) return <Navigate to="/tables" replace />;
+  return <Navigate to={firstAccessiblePath(user)} replace />;
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -60,20 +61,20 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               <Route path="/superadmin" element={<ProtectedRoute roles={['superadmin']}><SuperAdminPage /></ProtectedRoute>} />
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route index element={<HomeRedirect />} />
-                <Route path="/tables" element={<ProtectedRoute roles={['owner', 'manager', 'waiter']}><TablesPage /></ProtectedRoute>} />
-                <Route path="/orders" element={<ProtectedRoute roles={['owner', 'manager', 'waiter']}><OrderPage /></ProtectedRoute>} />
-                <Route path="/orders/:tableId" element={<ProtectedRoute roles={['owner', 'manager', 'waiter']}><OrderPage /></ProtectedRoute>} />
-                <Route path="/order-details/:orderId" element={<ProtectedRoute roles={['owner', 'manager', 'waiter']}><OrderDetailsPage /></ProtectedRoute>} />
-                <Route path="/parcel" element={<ProtectedRoute roles={['owner', 'manager', 'waiter']}><ParcelPage /></ProtectedRoute>} />
-                <Route path="/billing/:orderId" element={<ProtectedRoute roles={['owner', 'manager']}><BillingPage /></ProtectedRoute>} />
-                <Route path="/kitchen" element={<KitchenPage />} />
-                <Route path="/menu" element={<ProtectedRoute roles={['owner']}><MenuPage /></ProtectedRoute>} />
-                <Route path="/reports" element={<ProtectedRoute roles={['owner']}><ReportsPage /></ProtectedRoute>} />
-                <Route path="/customers" element={<ProtectedRoute roles={['owner', 'manager']}><CustomersPage /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute roles={['owner']}><SettingsPage /></ProtectedRoute>} />
-                <Route path="/staff" element={<ProtectedRoute roles={['owner']}><StaffPage /></ProtectedRoute>} />
+                <Route path="/tables" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="tables"><TablesPage /></ProtectedRoute>} />
+                <Route path="/orders" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="orders"><OrderPage /></ProtectedRoute>} />
+                <Route path="/orders/:tableId" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="orders"><OrderPage /></ProtectedRoute>} />
+                <Route path="/order-details/:orderId" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="orders"><OrderDetailsPage /></ProtectedRoute>} />
+                <Route path="/parcel" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="parcel"><ParcelPage /></ProtectedRoute>} />
+                <Route path="/billing/:orderId" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="billing"><BillingPage /></ProtectedRoute>} />
+                <Route path="/kitchen" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="kitchen"><KitchenPage /></ProtectedRoute>} />
+                <Route path="/menu" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="menu"><MenuPage /></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="reports"><ReportsPage /></ProtectedRoute>} />
+                <Route path="/customers" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="customers"><CustomersPage /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="settings"><SettingsPage /></ProtectedRoute>} />
+                <Route path="/staff" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="staff"><StaffPage /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/qr-menu" element={<ProtectedRoute roles={['owner', 'manager']}><QrMenuPage /></ProtectedRoute>} />
+                <Route path="/qr-menu" element={<ProtectedRoute roles={['owner', 'manager', 'waiter', 'chef']} permission="qr-menu"><QrMenuPage /></ProtectedRoute>} />
                 <Route path="/support" element={<ProtectedRoute roles={['owner']}><SupportPage /></ProtectedRoute>} />
               </Route>
               <Route path="*" element={<NotFoundPage />} />

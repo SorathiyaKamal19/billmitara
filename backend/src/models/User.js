@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, minlength: 8, select: false },
     role: { type: String, enum: ['superadmin', 'owner', 'manager', 'waiter', 'chef'], required: true },
     restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' },
+    permissions: [{ type: String, trim: true }],
     phone: { type: String, required: true, unique: true, trim: true },
     isActive: { type: Boolean, default: true },
     isSubscribed: { type: Boolean, default: true }
