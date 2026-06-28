@@ -23,7 +23,8 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { LanguageSelector } from "../components/LanguageSelector";
 import { Modal } from "../components/Modal";
-import { Role } from "../types";
+import { ModulePermission, Role } from "../types";
+import { hasModulePermission } from "../utils/permissions";
 
 const WELCOME_MODAL_KEY = "poss_show_welcome_modal";
 
@@ -33,6 +34,7 @@ const nav: {
   labelEn: string;
   icon: typeof LayoutDashboard;
   roles: Role[];
+  permission?: ModulePermission;
 }[] = [
   {
     to: "/",
@@ -46,21 +48,24 @@ const nav: {
     labelGu: "ટેબલ",
     labelEn: "Tables",
     icon: Table2,
-    roles: ["owner", "manager", "waiter"],
+    roles: ["owner", "manager", "waiter", "chef"],
+    permission: "tables",
   },
   {
     to: "/orders",
     labelGu: "ઓર્ડર",
     labelEn: "Orders",
     icon: ClipboardList,
-    roles: ["owner", "manager", "waiter"],
+    roles: ["owner", "manager", "waiter", "chef"],
+    permission: "orders",
   },
   {
     to: "/parcel",
     labelGu: "પાર્સલ",
     labelEn: "Parcel",
     icon: CreditCard,
-    roles: ["owner", "manager", "waiter"],
+    roles: ["owner", "manager", "waiter", "chef"],
+    permission: "parcel",
   },
   {
     to: "/kitchen",
@@ -68,41 +73,47 @@ const nav: {
     labelEn: "Kitchen",
     icon: ChefHat,
     roles: ["owner", "manager", "waiter", "chef"],
+    permission: "kitchen",
   },
   {
     to: "/menu",
     labelGu: "મેનુ",
     labelEn: "Menu",
     icon: MenuSquare,
-    roles: ["owner"],
+    roles: ["owner", "manager", "waiter", "chef"],
+    permission: "menu",
   },
   {
     to: "/reports",
     labelGu: "રિપોર્ટ",
     labelEn: "Reports",
     icon: BarChart3,
-    roles: ["owner"],
+    roles: ["owner", "manager", "waiter", "chef"],
+    permission: "reports",
   },
   {
     to: "/customers",
     labelGu: "ગ્રાહકો",
     labelEn: "Customers",
     icon: Users,
-    roles: ["owner", "manager"],
+    roles: ["owner", "manager", "waiter", "chef"],
+    permission: "customers",
   },
   {
     to: "/settings",
     labelGu: "સેટિંગ્સ",
     labelEn: "Settings",
     icon: Settings,
-    roles: ["owner"],
+    roles: ["owner", "manager", "waiter", "chef"],
+    permission: "settings",
   },
   {
     to: "/staff",
     labelGu: "સ્ટાફ",
     labelEn: "Staff",
     icon: UserCog,
-    roles: ["owner"],
+    roles: ["owner", "manager", "waiter", "chef"],
+    permission: "staff",
   },
   {
     to: "/support",
@@ -133,8 +144,10 @@ export function AppLayout() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(
     () => localStorage.getItem(WELCOME_MODAL_KEY) === "true",
   );
-  const allowed = nav.filter((item) =>
-    item.roles.includes(user?.role || "manager"),
+  const allowed = nav.filter(
+    (item) =>
+      item.roles.includes(user?.role || "manager") &&
+      hasModulePermission(user, item.permission),
   );
   const profileMenuItems = allowed.filter((item) =>
     [

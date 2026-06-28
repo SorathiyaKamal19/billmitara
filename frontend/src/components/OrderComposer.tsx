@@ -46,6 +46,7 @@ export function OrderComposer({
   const [gstEnabled, setGstEnabled] = useState(true);
   const [gstRate, setGstRate] = useState(5);
   const [mostSellingIds, setMostSellingIds] = useState<string[]>([]);
+  const isAddingToExistingOrder = Boolean(existingOrderId);
 
   useEffect(() => {
     api.get('/menu').then((res) => setMenu(res.data.filter((item: MenuItem) => item.isAvailable)));
@@ -94,7 +95,7 @@ export function OrderComposer({
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!cart.length) return toast.error(t('ઓછામાં ઓછી એક વસ્તુ ઉમેરો', 'Add at least one item'));
-    if (!customerName.trim()) return toast.error(t('ગ્રાહકનું નામ જરૂરી છે', 'Customer name is required'));
+    if (!isAddingToExistingOrder && !customerName.trim()) return toast.error(t('ગ્રાહકનું નામ જરૂરી છે', 'Customer name is required'));
     const payload = {
       table: type === 'dine-in' ? tableId : undefined,
       type,
@@ -104,10 +105,10 @@ export function OrderComposer({
       discountType: canDiscount ? discountType : 'fixed',
       discountValue: canDiscount ? discountValue : 0,
       discountReason: canDiscount && discountValue > 0 ? discountReason.trim() : undefined,
-      items: cart.map((item) => ({ menuItem: item._id, quantity: item.quantity, note: item.note })),
+      items: cart.map((item) => ({ menuItem: item._id, quantity: item.quantity, note: item.note || notes.trim() || undefined })),
       takeawayCharge: charge
     };
-    if (existingOrderId) {
+    if (isAddingToExistingOrder && existingOrderId) {
       await api.post(`/orders/${existingOrderId}/items`, {
         items: payload.items,
         discountType: payload.discountType,
@@ -149,14 +150,20 @@ export function OrderComposer({
       </section>
       <aside className={`glass h-fit rounded-lg p-4 sm:p-5 xl:sticky xl:top-6 ${mobileSummaryFirst ? 'order-first xl:order-none' : ''}`}>
         <div className="flex items-center justify-between"><h2 className="text-xl font-black">{t('હાલનો ઓર્ડર', 'Current order')}</h2><Send className="text-saffron" /></div>
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          {(['dine-in', 'takeaway'] as const).map((value) => (
-            <button key={value} type="button" onClick={() => setType(value)} className={type === value ? 'btn-primary px-2' : 'btn-soft px-2'}>{statusLabel(value)}</button>
-          ))}
-        </div>
+        {!isAddingToExistingOrder && (
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {(['dine-in', 'takeaway'] as const).map((value) => (
+              <button key={value} type="button" onClick={() => setType(value)} className={type === value ? 'btn-primary px-2' : 'btn-soft px-2'}>{statusLabel(value)}</button>
+            ))}
+          </div>
+        )}
         <div className="mt-4 grid gap-3">
-          <input className="input" placeholder={t('ગ્રાહકનું નામ', 'Customer name') + ' *'} required value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
-          <input className="input" placeholder={t('WhatsApp બિલ માટે મોબાઇલ', 'Mobile for WhatsApp bill')} value={customerMobile} onChange={(e) => setCustomerMobile(e.target.value)} />
+          {!isAddingToExistingOrder && (
+            <>
+              <input className="input" placeholder={t('ગ્રાહકનું નામ', 'Customer name') + ' *'} required value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+              <input className="input" placeholder={t('WhatsApp બિલ માટે મોબાઇલ', 'Mobile for WhatsApp bill')} value={customerMobile} onChange={(e) => setCustomerMobile(e.target.value)} />
+            </>
+          )}
           <textarea className="input min-h-20" placeholder={t('રસોડા માટે નોંધ', 'Kitchen notes')} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
         <div className="mt-5 max-h-80 space-y-3 overflow-y-auto pr-1 sm:max-h-[45vh] xl:max-h-80">

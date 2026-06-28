@@ -62,6 +62,28 @@ async function hydrateItems(items, restaurantId) {
   });
 }
 
+function normalizeNote(note) {
+  return String(note || '').trim();
+}
+
+function mergeOrderItems(existingItems, newItems) {
+  for (const newItem of newItems) {
+    const newMenuItemId = String(newItem.menuItem || '');
+    const newNote = normalizeNote(newItem.note);
+    const existing = existingItems.find((item) =>
+      String(item.menuItem || '') === newMenuItemId &&
+      normalizeNote(item.note) === newNote
+    );
+
+    if (existing) {
+      existing.quantity += newItem.quantity;
+      existing.status = 'queued';
+    } else {
+      existingItems.push(newItem);
+    }
+  }
+}
+
 export const listOrders = asyncHandler(async (req, res) => {
   const query = { restaurant: req.user.restaurant };
   if (req.query.kitchenHistory === 'today') {
@@ -166,7 +188,7 @@ export const addItemsToOrder = asyncHandler(async (req, res) => {
   const order = await Order.findOne({ _id: req.params.id, restaurant: req.user.restaurant });
   if (!order) throw new ApiError(404, 'Order not found');
   const items = await hydrateItems(input.items, req.user.restaurant);
-  order.items.push(...items);
+  mergeOrderItems(order.items, items);
   const totals = calculateOrderTotals(order.items, {
     discountType: input.discountType ?? order.discountType,
     discountValue: input.discountValue ?? input.discount ?? order.discountValue,

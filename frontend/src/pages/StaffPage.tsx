@@ -3,20 +3,32 @@ import { Edit3, Plus, Save, Trash2, UsersRound, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as yup from 'yup';
 import { api } from '../api/client';
-import { Role, User } from '../types';
+import { ModulePermission, Role, User } from '../types';
 import { PasswordInput } from '../components/PasswordInput';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useLanguage } from '../context/LanguageContext';
+import { defaultPermissionsForRole, orderedPermissions } from '../utils/permissions';
 
 type StaffRole = Exclude<Role, 'superadmin' | 'owner'>;
 
-const emptyForm = {
+type StaffForm = {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  role: StaffRole;
+  isActive: boolean;
+  permissions: ModulePermission[];
+};
+
+const emptyForm: StaffForm = {
   name: '',
   email: '',
   password: '',
   phone: '',
   role: 'waiter' as StaffRole,
-  isActive: true
+  isActive: true,
+  permissions: defaultPermissionsForRole('waiter')
 };
 
 export function StaffPage() {
@@ -45,8 +57,25 @@ export function StaffPage() {
         }),
         phone: yup.string().trim().min(6, t('માન્ય મોબાઇલ નંબર દાખલ કરો', 'Enter a valid mobile number')).required(t('મોબાઇલ નંબર જરૂરી છે', 'Mobile number is required')),
         role: yup.mixed<StaffRole>().oneOf(['manager', 'waiter', 'chef']).required(t('ભૂમિકા જરૂરી છે', 'Role is required')),
-        isActive: yup.boolean().required()
+        isActive: yup.boolean().required(),
+        permissions: yup.array(yup.mixed<ModulePermission>().oneOf(orderedPermissions)).required()
       }),
+    [t]
+  );
+
+  const moduleOptions = useMemo(
+    () => [
+      { value: 'tables' as ModulePermission, label: t('Tables', 'Tables') },
+      { value: 'orders' as ModulePermission, label: t('Orders', 'Orders') },
+      { value: 'parcel' as ModulePermission, label: t('Parcel', 'Parcel') },
+      { value: 'kitchen' as ModulePermission, label: t('Kitchen', 'Kitchen') },
+      { value: 'billing' as ModulePermission, label: t('Billing', 'Billing') },
+      { value: 'menu' as ModulePermission, label: t('Menu', 'Menu') },
+      { value: 'reports' as ModulePermission, label: t('Reports', 'Reports') },
+      { value: 'customers' as ModulePermission, label: t('Customers', 'Customers') },
+      { value: 'settings' as ModulePermission, label: t('Settings', 'Settings') },
+      { value: 'staff' as ModulePermission, label: t('Staff', 'Staff') }
+    ],
     [t]
   );
 
@@ -79,7 +108,7 @@ export function StaffPage() {
 
   function resetForm() {
     setEditingId(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, permissions: [...emptyForm.permissions] });
   }
 
   function editUser(user: User) {
@@ -90,8 +119,28 @@ export function StaffPage() {
       password: '',
       phone: user.phone || '',
       role: user.role as StaffRole,
-      isActive: user.isActive !== false
+      isActive: user.isActive !== false,
+      permissions: (user.permissions ?? defaultPermissionsForRole(user.role)).filter((permission) =>
+        orderedPermissions.includes(permission)
+      )
     });
+  }
+
+  function changeRole(role: StaffRole) {
+    setForm((current) => ({
+      ...current,
+      role,
+      permissions: editingId ? current.permissions : defaultPermissionsForRole(role)
+    }));
+  }
+
+  function togglePermission(permission: ModulePermission) {
+    setForm((current) => ({
+      ...current,
+      permissions: current.permissions.includes(permission)
+        ? current.permissions.filter((item) => item !== permission)
+        : [...current.permissions, permission]
+    }));
   }
 
   async function submit(event: FormEvent) {
@@ -104,6 +153,7 @@ export function StaffPage() {
         role: values.role,
         isActive: values.isActive,
         password: values.password || undefined,
+        permissions: values.permissions || [],
         ...(!editingId ? { email: values.email || undefined, phone: values.phone } : {})
       };
       const { data } = editingId
@@ -193,7 +243,7 @@ export function StaffPage() {
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-bold">{t('ભૂમિકા', 'Role')}</span>
-              <select className="input" value={form.role} onChange={(e) => setForm((current) => ({ ...current, role: e.target.value as StaffRole }))}>
+              <select className="input" value={form.role} onChange={(e) => changeRole(e.target.value as StaffRole)}>
                 <option value="manager">{t('મેનેજર', 'Manager')}</option>
                 <option value="waiter">{t('વેઇટર', 'Waiter')}</option>
                 <option value="chef">{t('શેફ', 'Chef')}</option>
@@ -203,6 +253,33 @@ export function StaffPage() {
               <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((current) => ({ ...current, isActive: e.target.checked }))} />
               {t('સક્રિય એકાઉન્ટ', 'Active account')}
             </label>
+          </div>
+
+          <div className="mt-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-black">{t('Module access', 'Module access')}</p>
+                <p className="text-xs font-semibold text-gray-500">{t('Choose what this staff member can open.', 'Choose what this staff member can open.')}</p>
+              </div>
+              <span className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-black text-gray-600 dark:bg-white/10 dark:text-gray-300">
+                {form.permissions.length}/{moduleOptions.length}
+              </span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {moduleOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm font-bold transition hover:border-saffron/40 dark:border-white/10 dark:bg-white/10"
+                >
+                  <input
+                    type="checkbox"
+                    checked={form.permissions.includes(option.value)}
+                    onChange={() => togglePermission(option.value)}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="mt-5 flex justify-end">
@@ -219,7 +296,11 @@ export function StaffPage() {
             <p className="font-black">{t('તમારો સ્ટાફ', 'Your staff')}</p>
           </div>
           <div className="divide-y divide-gray-200 dark:divide-white/10">
-            {staff.map((user) => (
+            {staff.map((user) => {
+              const permissions = (user.permissions ?? defaultPermissionsForRole(user.role)).filter((permission) =>
+                orderedPermissions.includes(permission)
+              );
+              return (
               <div key={user._id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -228,6 +309,18 @@ export function StaffPage() {
                     {user.isActive === false && <span className="rounded-lg bg-red-50 px-2 py-1 text-xs font-bold text-red-600">{t('બંધ', 'Disabled')}</span>}
                   </div>
                   <p className="mt-1 truncate text-sm text-gray-500">{user.email || t('ઇમેઇલ નથી', 'No email')}{user.phone ? ` - ${user.phone}` : ''}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {permissions.map((permission) => (
+                      <span key={permission} className="rounded-lg bg-saffron/10 px-2 py-1 text-[11px] font-black text-saffron">
+                        {moduleOptions.find((option) => option.value === permission)?.label || permission}
+                      </span>
+                    ))}
+                    {!permissions.length && (
+                      <span className="rounded-lg bg-gray-100 px-2 py-1 text-[11px] font-black text-gray-500 dark:bg-white/10">
+                        {t('No module access', 'No module access')}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button className="btn-soft" onClick={() => editUser(user)}>
@@ -238,7 +331,8 @@ export function StaffPage() {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
             {!loading && !staff.length && (
               <div className="p-8 text-center text-sm font-bold text-gray-500">{t('હજુ સુધી કોઈ સ્ટાફ એકાઉન્ટ નથી.', 'No staff accounts yet.')}</div>
             )}

@@ -1,4 +1,16 @@
 export type Role = 'superadmin' | 'owner' | 'manager' | 'waiter' | 'chef';
+export type ModulePermission =
+  | 'tables'
+  | 'orders'
+  | 'parcel'
+  | 'kitchen'
+  | 'billing'
+  | 'menu'
+  | 'reports'
+  | 'customers'
+  | 'settings'
+  | 'staff'
+  | 'qr-menu';
 
 export interface Restaurant {
   _id: string;
@@ -20,6 +32,7 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+  permissions?: ModulePermission[];
   restaurant?: Restaurant;
   phone?: string;
   isActive?: boolean;

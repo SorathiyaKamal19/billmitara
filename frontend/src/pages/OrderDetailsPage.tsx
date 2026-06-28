@@ -8,11 +8,17 @@ import { StatusBadge } from '../components/StatusBadge';
 import { useLanguage } from '../context/LanguageContext';
 import { Order } from '../types';
 import { money, shortDate } from '../utils/format';
+import { useAuth } from '../context/AuthContext';
+import { hasModulePermission } from '../utils/permissions';
 
 export function OrderDetailsPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const canOpenTables = hasModulePermission(user, 'tables');
+  const canOpenOrders = hasModulePermission(user, 'orders');
+  const canOpenBilling = hasModulePermission(user, 'billing');
   const [order, setOrder] = useState<Order | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
@@ -46,13 +52,15 @@ export function OrderDetailsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button className="btn-soft" onClick={() => navigate('/tables')}>
-            <ArrowLeft size={17} /> {t('ટેબલ', 'Tables')}
-          </button>
+          {canOpenTables && (
+            <button className="btn-soft" onClick={() => navigate('/tables')}>
+              <ArrowLeft size={17} /> {t('ટેબલ', 'Tables')}
+            </button>
+          )}
           <button className="btn-soft" onClick={load}>
             <RefreshCw size={17} /> {t('રિફ્રેશ', 'Refresh')}
           </button>
-          {order.table && (
+          {order.table && canOpenOrders && (
             <button className="btn-soft" onClick={() => navigate(`/orders/${order.table}?orderId=${order._id}`)}>
               <PlusCircle size={17} /> {t('વસ્તુઓ ઉમેરો', 'Add items')}
             </button>
@@ -63,9 +71,11 @@ export function OrderDetailsPage() {
           >
             <Ban size={17} /> {t('રદ કરો', 'Cancel')}
           </button>
-          <button className="btn-primary" onClick={() => navigate(`/billing/${order._id}`)}>
-            <CreditCard size={17} /> {t('બિલ બનાવો', 'Generate bill')}
-          </button>
+          {canOpenBilling && (
+            <button className="btn-primary" onClick={() => navigate(`/billing/${order._id}`)}>
+              <CreditCard size={17} /> {t('બિલ બનાવો', 'Generate bill')}
+            </button>
+          )}
         </div>
       </div>
 

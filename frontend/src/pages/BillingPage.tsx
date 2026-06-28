@@ -21,6 +21,7 @@ import { Invoice, Order, Restaurant } from "../types";
 import { formatBillDateTime } from "../utils/format";
 import { money } from "../utils/format";
 import { paymentLabel } from "../utils/gujarati";
+import { hasModulePermission } from "../utils/permissions";
 
 type PaymentMethod = "cash" | "upi";
 type PaymentMode = PaymentMethod | "partial";
@@ -31,6 +32,7 @@ export function BillingPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const canDiscount = user?.role === "owner";
+  const canOpenTables = hasModulePermission(user, "tables");
   const [restaurant, setRestaurant] = useState<Partial<Restaurant>>(
     user?.restaurant || {}
   );
@@ -525,12 +527,14 @@ export function BillingPage() {
             <div className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">
               {invoice.billNumber} · {invoice.whatsappStatus}
             </div>
-            <button
-              className="btn-primary w-full"
-              onClick={() => navigate("/tables")}
-            >
-              {t("ફ્લોર પર પાછા જાઓ", "Back to floor")}
-            </button>
+            {canOpenTables && (
+              <button
+                className="btn-primary w-full"
+                onClick={() => navigate("/tables")}
+              >
+                {t("ફ્લોર પર પાછા જાઓ", "Back to floor")}
+              </button>
+            )}
           </div>
         )}
       </aside>

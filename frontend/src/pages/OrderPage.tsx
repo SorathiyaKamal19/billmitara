@@ -9,12 +9,16 @@ import { api } from '../api/client';
 import { Order } from '../types';
 import { money, shortDate } from '../utils/format';
 import { useSocket } from '../hooks/useSocket';
+import { useAuth } from '../context/AuthContext';
+import { hasModulePermission } from '../utils/permissions';
 
 export function OrderPage() {
   const { tableId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const canOpenBilling = hasModulePermission(user, 'billing');
   const [orders, setOrders] = useState<Order[]>([]);
   const [showComposer, setShowComposer] = useState(Boolean(tableId));
   const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
@@ -111,7 +115,9 @@ export function OrderPage() {
                   ) : (
                     <button className="btn-soft min-w-0 px-2" onClick={() => setShowComposer(true)}><ShoppingBag size={17} /> <span className="truncate">{t('નવો ઓર્ડર', 'New order')}</span></button>
                   )}
-                  <button className="btn-primary min-w-0 px-2" onClick={() => navigate(`/billing/${order._id}`)}><CreditCard size={17} /> <span className="truncate">{t('બિલ', 'Bill')}</span></button>
+                  {canOpenBilling && (
+                    <button className="btn-primary min-w-0 px-2" onClick={() => navigate(`/billing/${order._id}`)}><CreditCard size={17} /> <span className="truncate">{t('બિલ', 'Bill')}</span></button>
+                  )}
                   <button
                     className="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 font-bold text-red-700 hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
                     onClick={() => setOrderToCancel(order)}
