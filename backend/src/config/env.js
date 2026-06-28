@@ -52,6 +52,7 @@ export const env = {
   seed: {
     ownerEmail: process.env.SEED_OWNER_EMAIL || 'owner@poss.local',
     ownerPassword: process.env.SEED_OWNER_PASSWORD || 'Password@123',
+    superadminName: process.env.SEED_SUPERADMIN_NAME || 'Super Admin',
     superadminEmail: process.env.SEED_SUPERADMIN_EMAIL || 'superadmin@poss.local',
     superadminPassword: process.env.SEED_SUPERADMIN_PASSWORD || 'Password@123',
     superadminPhone: process.env.SEED_SUPERADMIN_PHONE || '+919999999000'

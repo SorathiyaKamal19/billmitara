@@ -36,7 +36,7 @@ async function seed() {
     { new: true, upsert: true }
   );
   const users = [
-    { name: 'Super Admin', email: env.seed.superadminEmail, password: env.seed.superadminPassword, role: 'superadmin', phone: env.seed.superadminPhone },
+    { name: env.seed.superadminName, email: env.seed.superadminEmail, password: env.seed.superadminPassword, role: 'superadmin', phone: env.seed.superadminPhone },
     { name: 'Owner Demo', email: env.seed.ownerEmail, password: env.seed.ownerPassword, role: 'owner', restaurant: restaurant._id, phone: '+919999999001' },
     { name: 'Manager Demo', email: 'manager@poss.local', password: 'Password@123', role: 'manager', restaurant: restaurant._id, phone: '+919999999002' },
     { name: 'Waiter Demo', email: 'waiter@poss.local', password: 'Password@123', role: 'waiter', restaurant: restaurant._id, phone: '+919999999003' },
