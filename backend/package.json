@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "seed": "node src/seed.js"
+    "seed": "node src/seed.js",
+    "create-superadmin": "node src/createSuperadmin.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
