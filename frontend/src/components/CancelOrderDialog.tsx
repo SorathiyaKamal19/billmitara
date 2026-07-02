@@ -26,7 +26,7 @@ export function CancelOrderDialog({
     event.preventDefault();
     const cleanReason = reason.trim();
     if (!cleanReason) {
-      toast.error(t('Enter a reason for cancelling the order', 'Enter a reason for cancelling the order'));
+      toast.error(t('ઓર્ડર રદ કરવા માટે કારણ દાખલ કરો', 'Enter a reason for cancelling the order'));
       return;
     }
 
@@ -36,10 +36,10 @@ export function CancelOrderDialog({
         status: 'cancelled',
         reason: cleanReason
       });
-      toast.success(t('Order cancelled', 'Order cancelled'));
+      toast.success(t('ઓર્ડર રદ થયો', 'Order cancelled'));
       await onCancelled();
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || t('Could not cancel order', 'Could not cancel order'));
+      toast.error(error?.response?.data?.message || t('ઓર્ડર રદ કરી શકાયો નહીં', 'Could not cancel order'));
     } finally {
       setSaving(false);
     }
@@ -47,14 +47,14 @@ export function CancelOrderDialog({
 
   return (
     <Modal
-      title={t('Confirm order cancellation', 'Confirm order cancellation')}
+      title={t('ઓર્ડર રદ કરવાની પુષ્ટિ કરો', 'Confirm order cancellation')}
       description={orderLabel}
       icon={<Ban size={22} />}
       onClose={onClose}
       footer={
         <>
           <button type="button" className="btn-soft" onClick={onClose} disabled={saving}>
-            {t('Go back', 'Go back')}
+            {t('પાછા જાઓ', 'Go back')}
           </button>
           <button
             type="submit"
@@ -63,7 +63,7 @@ export function CancelOrderDialog({
             disabled={saving}
           >
             <Ban size={17} />
-            {saving ? t('Cancelling...', 'Cancelling...') : t('Cancel order', 'Cancel order')}
+            {saving ? t('રદ થઈ રહ્યું છે...', 'Cancelling...') : t('ઓર્ડર રદ કરો', 'Cancel order')}
           </button>
         </>
       }
@@ -71,17 +71,17 @@ export function CancelOrderDialog({
       <form id="cancel-order-form" onSubmit={submit}>
         <p className="text-sm leading-6 text-gray-600 dark:text-gray-300">
           {t(
-            'Enter why the customer left or the order is being cancelled. The table will become available for a new order.',
+            'ગ્રાહક કેમ ગયો અથવા ઓર્ડર કેમ રદ થઈ રહ્યો છે તે દાખલ કરો. ટેબલ નવા ઓર્ડર માટે ઉપલબ્ધ થશે.',
             'Enter why the customer left or the order is being cancelled. The table will become available for a new order.'
           )}
         </p>
 
-        <label className="mt-5 block text-sm font-bold">{t('Cancellation reason', 'Cancellation reason')}</label>
+        <label className="mt-5 block text-sm font-bold">{t('રદ કરવાનો કારણ', 'Cancellation reason')}</label>
         <textarea
           className="input mt-2 min-h-28"
           value={reason}
           onChange={(event) => setReason(event.target.value)}
-          placeholder={t('Example: Customer could not wait', 'Example: Customer could not wait')}
+          placeholder={t('ઉદાહરણ: ગ્રાહક રાહ જોઈ શક્યો નહીં', 'Example: Customer could not wait')}
           autoFocus
           required
         />

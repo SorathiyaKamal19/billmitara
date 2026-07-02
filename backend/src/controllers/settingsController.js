@@ -10,11 +10,17 @@ const settingsSchema = z.object({
   gstNumber: z.string().optional(),
   gstEnabled: z.boolean().optional(),
   gstRate: z.number().min(0).max(100).optional(),
+  defaultDiscountType: z.enum(['fixed', 'percentage']).optional(),
+  defaultDiscountValue: z.number().min(0).max(100000).optional(),
+  defaultDiscountReason: z.string().optional(),
   takeawayChargeEnabled: z.boolean().optional(),
   takeawayCharge: z.number().min(0).optional(),
   parcelCharge: z.number().min(0).optional(),
   brandColor: z.string().optional(),
   qrMenuUrl: z.string().optional()
+}).refine((settings) => settings.defaultDiscountType !== 'percentage' || (settings.defaultDiscountValue ?? 0) <= 100, {
+  message: 'Percentage discount cannot be more than 100',
+  path: ['defaultDiscountValue']
 });
 
 export const getSettings = asyncHandler(async (req, res) => {

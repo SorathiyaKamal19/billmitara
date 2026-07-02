@@ -74,22 +74,22 @@ export function LoginPage() {
               </div>
               <div>
                 <p className="text-2xl font-black">BillMitara</p>
-                <p className="text-sm text-white/70">{t('Smart Restaurant POS', 'Smart Restaurant POS')}</p>
+                <p className="text-sm text-white/70">{t('સ્માર્ટ રેસ્ટોરન્ટ POS', 'Smart Restaurant POS')}</p>
               </div>
             </div>
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.22em] text-teal-200">
-                {t('Run your restaurant with clarity', 'Run your restaurant with clarity')}
+                {t('તમારું રેસ્ટોરન્ટ સ્પષ્ટતા સાથે ચલાવો', 'Run your restaurant with clarity')}
               </p>
               <h1 className="mt-4 max-w-xl text-5xl font-black leading-tight">
-                {t('From order to bill, everything in one place.', 'From order to bill, everything in one place.')}
+                {t('ઓર્ડરથી બિલ સુધી બધું એક જ જગ્યાએ.', 'From order to bill, everything in one place.')}
               </h1>
               <div className="mt-10 grid gap-4 sm:grid-cols-2">
                 {[
-                  [ReceiptText, t('Fast billing', 'Fast billing')],
-                  [ChefHat, t('Live kitchen orders', 'Live kitchen orders')],
-                  [BarChart3, t('Business reports', 'Business reports')],
-                  [ShieldCheck, t('Secure staff access', 'Secure staff access')]
+                  [ReceiptText, t('ઝડપી બિલિંગ', 'Fast billing')],
+                  [ChefHat, t('લાઈવ કિચન ઓર્ડર', 'Live kitchen orders')],
+                  [BarChart3, t('બિઝનેસ રિપોર્ટ્સ', 'Business reports')],
+                  [ShieldCheck, t('સુરક્ષિત સ્ટાફ એક્સેસ', 'Secure staff access')]
                 ].map(([Icon, label]) => (
                   <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 p-4" key={String(label)}>
                     <Icon size={20} className="text-teal-200" />
@@ -114,15 +114,15 @@ export function LoginPage() {
             </div>
           </div>
 
-          <p className="text-sm font-bold uppercase tracking-widest text-teal-700">{t('Secure sign in', 'Secure sign in')}</p>
-          <h1 className="mt-2 text-4xl font-black">{t('Welcome back', 'Welcome back')}</h1>
+          <p className="text-sm font-bold uppercase tracking-widest text-teal-700">{t('સુરક્ષિત સાઇન ઇન', 'Secure sign in')}</p>
+          <h1 className="mt-2 text-4xl font-black">{t('ફરી સ્વાગત છે', 'Welcome back')}</h1>
           <p className="mt-3 text-sm leading-6 text-gray-500 dark:text-gray-400">
-            {t('Sign in with your email address or registered mobile number.', 'Sign in with your email address or registered mobile number.')}
+            {t('તમારા ઈમેઈલ અથવા નોંધાયેલા મોબાઇલ નંબરથી સાઇન ઇન કરો.', 'Sign in with your email address or registered mobile number.')}
           </p>
 
           <div className="mt-8 space-y-5">
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{t('Email or mobile number', 'Email or mobile number')}</span>
+              <span className="mb-2 block text-sm font-bold">{t('ઈમેઈલ અથવા મોબાઇલ નંબર', 'Email or mobile number')}</span>
               <div className="relative">
                 {identifier.includes('@') ? (
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -136,7 +136,7 @@ export function LoginPage() {
                   onBlur={() => {
                     if (rememberMe && identifier.trim()) localStorage.setItem(REMEMBER_IDENTIFIER_KEY, identifier.trim());
                   }}
-                  placeholder={t('name@gmail.com or +91...', 'name@gmail.com or +91...')}
+                  placeholder={t('name@gmail.com અથવા +91...', 'name@gmail.com or +91...')}
                   autoComplete="username"
                   required
                 />
@@ -144,14 +144,14 @@ export function LoginPage() {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{t('Password', 'Password')}</span>
+              <span className="mb-2 block text-sm font-bold">{t('પાસવર્ડ', 'Password')}</span>
               <PasswordInput
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 showLockIcon
                 className="h-12"
-                showLabel={t('Show password', 'Show password')}
-                hideLabel={t('Hide password', 'Hide password')}
+                showLabel={t('પાસવર્ડ બતાવો', 'Show password')}
+                hideLabel={t('પાસવર્ડ છુપાવો', 'Hide password')}
                 autoComplete="current-password"
                 required
               />
@@ -165,21 +165,21 @@ export function LoginPage() {
                   onChange={(event) => handleRememberChange(event.target.checked)}
                   className="size-4 rounded border-gray-300 text-teal-700 accent-teal-700 focus:ring-teal-600"
                 />
-                <span>{t('Remember me', 'Remember me')}</span>
+                <span>{t('મને યાદ રાખો', 'Remember me')}</span>
               </label>
               <Link className="font-bold text-teal-700 hover:underline" to="/forgot-password">
-                {t('Forgot password?', 'Forgot password?')}
+                {t('પાસવર્ડ ભૂલી ગયા?', 'Forgot password?')}
               </Link>
             </div>
 
             <button disabled={loading} className="btn-primary h-12 w-full">
               <LogIn size={18} />
-              {loading ? t('Signing in...', 'Signing in...') : t('Sign in', 'Sign in')}
+              {loading ? t('સાઇન ઇન થઈ રહ્યું છે...', 'Signing in...') : t('સાઇન ઇન', 'Sign in')}
             </button>
             <p className="text-center text-sm text-gray-500">
-              {t('New restaurant account?', 'New restaurant account?')}{' '}
+              {t('નવું રેસ્ટોરન્ટ એકાઉન્ટ?', 'New restaurant account?')}{' '}
               <Link to="/register-owner" className="font-bold text-teal-700 hover:underline">
-                {t('Create owner account', 'Create owner account')}
+                {t('માલિક એકાઉન્ટ બનાવો', 'Create owner account')}
               </Link>
             </p>
           </div>

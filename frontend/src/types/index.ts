@@ -20,6 +20,9 @@ export interface Restaurant {
   gstNumber?: string;
   gstEnabled: boolean;
   gstRate: number;
+  defaultDiscountType?: 'fixed' | 'percentage';
+  defaultDiscountValue?: number;
+  defaultDiscountReason?: string;
   takeawayChargeEnabled: boolean;
   takeawayCharge: number;
   parcelCharge?: number;
@@ -113,7 +116,17 @@ export interface Invoice {
   customerName?: string;
   customerMobile?: string;
   subtotal: number;
+  discountType?: 'fixed' | 'percentage';
+  discountValue?: number;
+  discount?: number;
+  discountReason?: string;
+  takeawayCharge?: number;
+  parcelCharge?: number;
+  gstEnabled?: boolean;
+  gstRate?: number;
   gst: number;
+  exactTotal?: number;
+  roundOff?: number;
   total: number;
   pdfUrl?: string;
   publicCode?: string;

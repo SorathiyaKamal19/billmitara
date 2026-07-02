@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import { api } from "../api/client";
 import { BillTotals } from "../components/BillTotals";
+import { useLanguage } from "../context/LanguageContext";
 import { formatBillDateTime, money } from "../utils/format";
 import { paymentLabel } from "../utils/gujarati";
 
@@ -44,6 +45,7 @@ type PublicInvoice = {
 
 export function PublicInvoicePage() {
   const { code } = useParams();
+  const { t } = useLanguage();
   const [bill, setBill] = useState<PublicInvoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -74,9 +76,9 @@ export function PublicInvoicePage() {
         return;
       }
       await navigator.clipboard.writeText(shareUrl);
-      toast.success("Bill link copied");
+      toast.success(t("બિલ લિંક કોપી થઈ", "Bill link copied"));
     } catch {
-      toast.error("Could not share bill");
+      toast.error(t("બિલ શેર કરી શકાયું નહીં", "Could not share bill"));
     }
   }
 
@@ -85,7 +87,7 @@ export function PublicInvoicePage() {
       <main className="grid min-h-dvh place-items-center px-4 py-8">
         <div className="glass w-full max-w-md rounded-lg p-6 text-center">
           <ReceiptText className="mx-auto text-saffron" size={38} />
-          <p className="mt-4 font-black">Loading invoice...</p>
+          <p className="mt-4 font-black">{t("ઇન્વોઇસ લોડ થઈ રહ્યું છે...", "Loading invoice...")}</p>
         </div>
       </main>
     );
@@ -96,9 +98,9 @@ export function PublicInvoicePage() {
       <main className="grid min-h-dvh place-items-center px-4 py-8">
         <div className="glass w-full max-w-md rounded-lg p-6 text-center">
           <XCircle className="mx-auto text-red-500" size={42} />
-          <h1 className="mt-4 text-2xl font-black">Invoice not found</h1>
+          <h1 className="mt-4 text-2xl font-black">{t("ઇન્વોઇસ મળ્યું નથી", "Invoice not found")}</h1>
           <p className="mt-2 text-sm text-gray-500">
-            Please check the QR code or ask the restaurant to resend the bill.
+            {t("કૃપા કરીને QR કોડ તપાસો અથવા રેસ્ટોરન્ટને બિલ ફરી મોકલવા કહો.", "Please check the QR code or ask the restaurant to resend the bill.")}
           </p>
         </div>
       </main>
@@ -112,9 +114,9 @@ export function PublicInvoicePage() {
         .join(" + ")
     : invoice.paymentMode
       ? paymentLabel(invoice.paymentMode)
-      : "Paid";
+      : t("ચૂકવાયેલ", "Paid");
   const serviceLabel =
-    order.type === "dine-in" ? order.tableName || "Dine-in" : "Takeaway";
+    order.type === "dine-in" ? order.tableName || t("ડાઇન-ઇન", "Dine-in") : t("ટેકઅવે", "Takeaway");
 
   return (
     <main className="min-h-dvh px-4 py-6 sm:px-6">
@@ -125,7 +127,7 @@ export function PublicInvoicePage() {
               <div>
                 <div className="flex items-center gap-2 text-sm font-bold uppercase text-white/70">
                   <Store size={16} />
-                  Invoice
+                  {t("ઇન્વોઇસ", "Invoice")}
                 </div>
                 <h1 className="mt-2 text-3xl font-black leading-tight">
                   {restaurant.name}
@@ -137,7 +139,7 @@ export function PublicInvoicePage() {
                 )}
               </div>
               <div className="text-left sm:text-right">
-                <p className="text-sm text-white/60">Amount</p>
+                <p className="text-sm text-white/60">{t("રકમ", "Amount")}</p>
                 <p className="text-3xl font-black">{money(invoice.total)}</p>
               </div>
             </div>
@@ -146,38 +148,38 @@ export function PublicInvoicePage() {
           <div className="grid gap-4 border-b border-gray-200 px-5 py-5 text-sm dark:border-white/10 sm:grid-cols-2 sm:px-7">
             <div>
               <p className="text-xs font-bold uppercase text-gray-500">
-                Invoice No.
+                {t("ઇન્વોઇસ નં.", "Invoice No.")}
               </p>
               <p className="font-black">{invoice.billNumber}</p>
             </div>
             <div className="sm:text-right">
-              <p className="text-xs font-bold uppercase text-gray-500">Date</p>
+              <p className="text-xs font-bold uppercase text-gray-500">{t("તારીખ", "Date")}</p>
               <p className="font-bold">{formatBillDateTime(invoice.createdAt)}</p>
             </div>
             <div>
               <p className="text-xs font-bold uppercase text-gray-500">
-                Customer
+                {t("ગ્રાહક", "Customer")}
               </p>
-              <p className="font-bold">{invoice.customerName || "Walk-in"}</p>
+              <p className="font-bold">{invoice.customerName || t("વૉક-ઇન", "Walk-in")}</p>
               {invoice.customerMobile && (
                 <p className="text-gray-500">{invoice.customerMobile}</p>
               )}
             </div>
             <div className="sm:text-right">
               <p className="text-xs font-bold uppercase text-gray-500">
-                Service
+                {t("સેવા", "Service")}
               </p>
               <p className="font-bold">{serviceLabel}</p>
-              <p className="text-gray-500">Payment: {paymentText}</p>
+              <p className="text-gray-500">{t("પેમેન્ટ", "Payment")}: {paymentText}</p>
             </div>
           </div>
 
           <div className="px-5 py-5 sm:px-7">
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-white/5">
               <div className="grid grid-cols-[1fr_48px_78px] gap-2 border-b border-gray-200 px-4 py-3 text-xs font-black uppercase text-gray-500 dark:border-white/10">
-                <span>Item</span>
-                <span className="text-center">Qty</span>
-                <span className="text-right">Amount</span>
+                <span>{t("વસ્તુ", "Item")}</span>
+                <span className="text-center">{t("જથ્થો", "Qty")}</span>
+                <span className="text-right">{t("રકમ", "Amount")}</span>
               </div>
               {order.items.map((item, index) => (
                 <div
@@ -190,7 +192,7 @@ export function PublicInvoicePage() {
                       <p className="mt-1 text-xs text-gray-500">{item.note}</p>
                     )}
                     <p className="mt-1 text-xs text-gray-500">
-                      {money(item.price)} each
+                      {money(item.price)} {t("પ્રતિ વસ્તુ", "each")}
                     </p>
                   </div>
                   <div className="text-center font-bold">{item.quantity}</div>
@@ -212,7 +214,7 @@ export function PublicInvoicePage() {
               gst={invoice.gst || 0}
               roundOff={invoice.roundOff || 0}
               total={invoice.total}
-              totalLabel="Amount paid"
+              totalLabel={t("ચૂકવેલી રકમ", "Amount paid")}
             />
           </div>
 
@@ -225,18 +227,18 @@ export function PublicInvoicePage() {
                 rel="noreferrer"
               >
                 <Download size={18} />
-                Download PDF
+                {t("PDF ડાઉનલોડ કરો", "Download PDF")}
               </a>
             )}
             <button className="btn-soft flex-1" onClick={shareBill}>
               <Share2 size={18} />
-              Share Bill
+              {t("બિલ શેર કરો", "Share Bill")}
             </button>
           </div>
         </section>
 
         <p className="py-5 text-center text-sm font-bold text-gray-500">
-          Thank you for visiting. Visit again!
+          {t("મુલાકાત બદલ આભાર. ફરી મુલાકાત લેજો!", "Thank you for visiting. Visit again!")}
         </p>
       </div>
     </main>

@@ -1,10 +1,12 @@
 import { ArrowLeft, Home, SearchX, ServerCrash } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export function NotFoundPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const homePath = user ? '/' : '/login';
 
   return (
@@ -20,7 +22,7 @@ export function NotFoundPage() {
                 </div>
                 <div>
                   <p className="text-xl font-black">Bill Mitra</p>
-                  <p className="text-sm font-semibold text-white/60">Smart Restaurant POS</p>
+                  <p className="text-sm font-semibold text-white/60">{t('સ્માર્ટ રેસ્ટોરન્ટ POS', 'Smart Restaurant POS')}</p>
                 </div>
               </div>
 
@@ -31,7 +33,7 @@ export function NotFoundPage() {
                 </div>
                 <p className="mt-6 text-7xl font-black leading-none sm:text-8xl">404</p>
                 <p className="mt-4 max-w-sm text-base font-semibold leading-7 text-white/70">
-                  This page is missing, moved, or the address was typed incorrectly.
+                  {t('આ પેજ મળતું નથી, ખસેડાયું છે અથવા સરનામું ખોટું લખાયું છે.', 'This page is missing, moved, or the address was typed incorrectly.')}
                 </p>
               </div>
             </div>
@@ -41,31 +43,29 @@ export function NotFoundPage() {
             <div className="mb-8 grid size-16 place-items-center rounded-lg bg-saffron/10 text-saffron">
               <ServerCrash size={32} />
             </div>
-            <p className="text-sm font-bold uppercase tracking-widest text-saffron">Page not found</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-saffron">{t('પેજ મળ્યું નથી', 'Page not found')}</p>
             <h1 className="mt-3 text-3xl font-black leading-tight text-gray-950 dark:text-white sm:text-4xl">
-              We could not open this screen.
+              {t('અમે આ સ્ક્રીન ખોલી શક્યા નથી.', 'We could not open this screen.')}
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-6 text-gray-600 dark:text-gray-300">
-              Use the buttons below to return to a working page. If this happened after refreshing a deployed link,
-              the app needs the Vercel rewrite fallback included in the deployment.
+              {t('ચાલુ પેજ પર પાછા જવા માટે નીચેના બટન વાપરો. જો ડિપ્લોય લિંક રિફ્રેશ કર્યા પછી આવું થયું હોય, તો ડિપ્લોયમેન્ટમાં Vercel rewrite fallback ઉમેરવાની જરૂર છે.', 'Use the buttons below to return to a working page. If this happened after refreshing a deployed link, the app needs the Vercel rewrite fallback included in the deployment.')}
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link to={homePath} className="btn-primary">
                 <Home size={18} />
-                {user ? 'Go to dashboard' : 'Go to login'}
+                {user ? t('ડેશબોર્ડ પર જાઓ', 'Go to dashboard') : t('લોગિન પર જાઓ', 'Go to login')}
               </Link>
               <button type="button" className="btn-soft" onClick={() => navigate(-1)}>
                 <ArrowLeft size={18} />
-                Go back
+                {t('પાછા જાઓ', 'Go back')}
               </button>
             </div>
 
             <div className="mt-8 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5">
-              <p className="text-sm font-bold text-gray-900 dark:text-white">Still seeing this on refresh?</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">{t('રિફ્રેશ પર હજુ પણ આવું દેખાય છે?', 'Still seeing this on refresh?')}</p>
               <p className="mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                Redeploy the latest version and confirm Vercel is using the frontend project root or the root
-                `vercel.json` rewrite.
+                {t('નવીનતમ વર્ઝન ફરી ડિપ્લોય કરો અને Vercel frontend project root અથવા root `vercel.json` rewrite વાપરે છે તેની પુષ્ટિ કરો.', 'Redeploy the latest version and confirm Vercel is using the frontend project root or the root `vercel.json` rewrite.')}
               </p>
             </div>
           </div>

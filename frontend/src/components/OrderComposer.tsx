@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { Minus, Plus, Search, Send, Star, Trash2 } from 'lucide-react';
+import { CheckCircle2, Minus, Plus, Search, Send, Star, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
@@ -46,6 +46,7 @@ export function OrderComposer({
   const [gstEnabled, setGstEnabled] = useState(true);
   const [gstRate, setGstRate] = useState(5);
   const [mostSellingIds, setMostSellingIds] = useState<string[]>([]);
+  const [orderedQuantities, setOrderedQuantities] = useState<Record<string, number>>({});
   const isAddingToExistingOrder = Boolean(existingOrderId);
 
   useEffect(() => {
@@ -55,8 +56,33 @@ export function OrderComposer({
       setTakeawayCharge(res.data.takeawayChargeEnabled ? charge : 0);
       setGstEnabled(Boolean(res.data.gstEnabled));
       setGstRate(Number(res.data.gstRate || 0));
+      if (!existingOrderId) {
+        const defaultDiscountValue = Number(res.data.defaultDiscountValue || 0);
+        setDiscountType(res.data.defaultDiscountType || 'fixed');
+        setDiscountValue(defaultDiscountValue);
+        setDiscountReason(defaultDiscountValue > 0 ? res.data.defaultDiscountReason || '' : '');
+      }
     });
-  }, []);
+  }, [existingOrderId]);
+
+  useEffect(() => {
+    if (!existingOrderId) {
+      setOrderedQuantities({});
+      return;
+    }
+
+    api.get(`/orders/${existingOrderId}`).then((res) => {
+      const quantities = res.data.items.reduce((acc: Record<string, number>, item: { menuItem?: string; quantity: number }) => {
+        const menuItemId = String(item.menuItem || '');
+        if (menuItemId) acc[menuItemId] = (acc[menuItemId] || 0) + item.quantity;
+        return acc;
+      }, {});
+      setOrderedQuantities(quantities);
+      setDiscountType(res.data.discountType || 'fixed');
+      setDiscountValue(res.data.discountValue || 0);
+      setDiscountReason(res.data.discountReason || '');
+    });
+  }, [existingOrderId]);
 
   const categories = useMemo(() => ['All', 'Most Selling', ...Array.from(new Set(menu.map((item) => item.category)))], [menu]);
   useEffect(() => {
@@ -102,18 +128,22 @@ export function OrderComposer({
       customerName: customerName.trim(),
       customerMobile: customerMobile.trim(),
       notes,
-      discountType: canDiscount ? discountType : 'fixed',
-      discountValue: canDiscount ? discountValue : 0,
-      discountReason: canDiscount && discountValue > 0 ? discountReason.trim() : undefined,
+      ...(canDiscount ? {
+        discountType,
+        discountValue,
+        discountReason: discountValue > 0 ? discountReason.trim() : undefined
+      } : {}),
       items: cart.map((item) => ({ menuItem: item._id, quantity: item.quantity, note: item.note || notes.trim() || undefined })),
       takeawayCharge: charge
     };
     if (isAddingToExistingOrder && existingOrderId) {
       await api.post(`/orders/${existingOrderId}/items`, {
         items: payload.items,
-        discountType: payload.discountType,
-        discountValue: payload.discountValue,
-        discountReason: payload.discountReason
+        ...(canDiscount ? {
+          discountType,
+          discountValue,
+          discountReason: discountValue > 0 ? discountReason.trim() : undefined
+        } : {})
       });
       toast.success(t('વધુ વસ્તુઓ રસોડામાં મોકલાઈ', 'More items sent to kitchen'));
     } else {
@@ -130,7 +160,7 @@ export function OrderComposer({
           <div className="flex flex-col gap-3">
             <div className="relative min-w-0">
               <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-              <input className="input pl-10" placeholder="Search item name or item code" value={query} onChange={(e) => setQuery(e.target.value)} />
+              <input className="input pl-10" placeholder={t('વસ્તુનું નામ અથવા કોડ શોધો', 'Search item name or item code')} value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
             <div className="grid max-h-40 gap-2 overflow-y-auto pr-1 sm:flex sm:max-h-none sm:max-w-full sm:overflow-x-auto sm:overflow-y-hidden sm:pb-1 sm:pr-0">
               {categories.map((cat) => <button type="button" key={cat} onClick={() => setCategory(cat)} className={`w-full justify-start sm:w-auto sm:shrink-0 ${cat === category ? 'btn-primary' : 'btn-soft'}`}>{cat === 'Most Selling' && <Star size={15} />} <span className="truncate">{cat === 'All' ? t('બધા', 'All') : cat === 'Most Selling' ? t('સૌથી વધુ વેચાતા', 'Most Selling') : cat}</span></button>)}
@@ -138,14 +168,49 @@ export function OrderComposer({
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((item) => (
-            <button type="button" key={item._id} onClick={() => add(item)} className="glass overflow-hidden rounded-lg text-left transition hover:-translate-y-1">
-              <div className="p-3 sm:p-4">
-                <div className="flex items-start justify-between gap-3"><p className="min-w-0 font-black">{item.name}</p><span className="shrink-0 text-sm font-black text-saffron">{money(item.price)}</span></div>
-                <p className="mt-1 text-xs text-gray-500">{item.code ? `${item.code} - ` : ''}{item.category} - {foodTypeLabel(item.foodType)}</p>
-              </div>
-            </button>
-          ))}
+          {filtered.map((item) => {
+            const cartItem = cart.find((row) => row._id === item._id);
+            const orderedQuantity = orderedQuantities[item._id] || 0;
+            const isSelected = Boolean(cartItem);
+            const wasOrdered = orderedQuantity > 0;
+
+            return (
+              <button
+                type="button"
+                key={item._id}
+                onClick={() => add(item)}
+                className={`glass overflow-hidden rounded-lg border text-left transition hover:-translate-y-1 ${
+                  isSelected
+                    ? 'border-saffron bg-saffron/10 ring-2 ring-saffron/30'
+                    : wasOrdered
+                      ? 'border-emerald-300 bg-emerald-50/80 dark:border-emerald-500/40 dark:bg-emerald-950/30'
+                      : 'border-transparent'
+                }`}
+              >
+                <div className="p-3 sm:p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 font-black">{item.name}</p>
+                    <span className="shrink-0 text-sm font-black text-saffron">{money(item.price)}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">{item.code ? `${item.code} - ` : ''}{item.category} - {foodTypeLabel(item.foodType)}</p>
+                  {(wasOrdered || isSelected) && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {wasOrdered && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-black text-white">
+                          <CheckCircle2 size={13} /> {t('ઓર્ડર થયેલું', 'Ordered')} x{orderedQuantity}
+                        </span>
+                      )}
+                      {isSelected && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-saffron px-2.5 py-1 text-xs font-black text-white">
+                          <Plus size={13} /> {t('પસંદ કરેલું', 'Selected')} x{cartItem?.quantity}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </section>
       <aside className={`glass h-fit rounded-lg p-4 sm:p-5 xl:sticky xl:top-6 ${mobileSummaryFirst ? 'order-first xl:order-none' : ''}`}>

@@ -65,16 +65,16 @@ export function StaffPage() {
 
   const moduleOptions = useMemo(
     () => [
-      { value: 'tables' as ModulePermission, label: t('Tables', 'Tables') },
-      { value: 'orders' as ModulePermission, label: t('Orders', 'Orders') },
-      { value: 'parcel' as ModulePermission, label: t('Parcel', 'Parcel') },
-      { value: 'kitchen' as ModulePermission, label: t('Kitchen', 'Kitchen') },
-      { value: 'billing' as ModulePermission, label: t('Billing', 'Billing') },
-      { value: 'menu' as ModulePermission, label: t('Menu', 'Menu') },
-      { value: 'reports' as ModulePermission, label: t('Reports', 'Reports') },
-      { value: 'customers' as ModulePermission, label: t('Customers', 'Customers') },
-      { value: 'settings' as ModulePermission, label: t('Settings', 'Settings') },
-      { value: 'staff' as ModulePermission, label: t('Staff', 'Staff') }
+      { value: 'tables' as ModulePermission, label: t('ટેબલ', 'Tables') },
+      { value: 'orders' as ModulePermission, label: t('ઓર્ડર', 'Orders') },
+      { value: 'parcel' as ModulePermission, label: t('પાર્સલ', 'Parcel') },
+      { value: 'kitchen' as ModulePermission, label: t('રસોડું', 'Kitchen') },
+      { value: 'billing' as ModulePermission, label: t('બિલિંગ', 'Billing') },
+      { value: 'menu' as ModulePermission, label: t('મેનુ', 'Menu') },
+      { value: 'reports' as ModulePermission, label: t('રિપોર્ટ', 'Reports') },
+      { value: 'customers' as ModulePermission, label: t('ગ્રાહકો', 'Customers') },
+      { value: 'settings' as ModulePermission, label: t('સેટિંગ્સ', 'Settings') },
+      { value: 'staff' as ModulePermission, label: t('સ્ટાફ', 'Staff') }
     ],
     [t]
   );
@@ -258,8 +258,8 @@ export function StaffPage() {
           <div className="mt-5">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-black">{t('Module access', 'Module access')}</p>
-                <p className="text-xs font-semibold text-gray-500">{t('Choose what this staff member can open.', 'Choose what this staff member can open.')}</p>
+                <p className="text-sm font-black">{t('મોડ્યુલ એક્સેસ', 'Module access')}</p>
+                <p className="text-xs font-semibold text-gray-500">{t('આ સ્ટાફ સભ્ય શું ખોલી શકે તે પસંદ કરો.', 'Choose what this staff member can open.')}</p>
               </div>
               <span className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-black text-gray-600 dark:bg-white/10 dark:text-gray-300">
                 {form.permissions.length}/{moduleOptions.length}
@@ -317,7 +317,7 @@ export function StaffPage() {
                     ))}
                     {!permissions.length && (
                       <span className="rounded-lg bg-gray-100 px-2 py-1 text-[11px] font-black text-gray-500 dark:bg-white/10">
-                        {t('No module access', 'No module access')}
+                        {t('મોડ્યુલ એક્સેસ નથી', 'No module access')}
                       </span>
                     )}
                   </div>

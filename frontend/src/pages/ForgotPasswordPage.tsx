@@ -68,7 +68,7 @@ export function ForgotPasswordPage() {
       toast.error(
         error.name === 'ValidationError'
           ? error.message
-          : error.response?.data?.message || t('Could not send OTP', 'Could not send OTP')
+          : error.response?.data?.message || t('OTP મોકલી શકાયો નહીં', 'Could not send OTP')
       );
     } finally {
       setLoading(false);
@@ -91,7 +91,7 @@ export function ForgotPasswordPage() {
       toast.error(
         error.name === 'ValidationError'
           ? error.message
-          : error.response?.data?.message || t('Could not verify OTP', 'Could not verify OTP')
+          : error.response?.data?.message || t('OTP ચકાસી શકાયો નહીં', 'Could not verify OTP')
       );
     } finally {
       setLoading(false);
@@ -102,7 +102,7 @@ export function ForgotPasswordPage() {
     event.preventDefault();
     if (!resetToken) {
       setStep('otp');
-      toast.error(t('Verify the OTP first', 'Verify the OTP first'));
+      toast.error(t('પહેલાં OTP ચકાસો', 'Verify the OTP first'));
       return;
     }
 
@@ -122,7 +122,7 @@ export function ForgotPasswordPage() {
       toast.error(
         error.name === 'ValidationError'
           ? error.errors[0]
-          : error.response?.data?.message || t('Could not reset password', 'Could not reset password')
+          : error.response?.data?.message || t('પાસવર્ડ રીસેટ કરી શકાયો નહીં', 'Could not reset password')
       );
     } finally {
       setLoading(false);
@@ -142,7 +142,7 @@ export function ForgotPasswordPage() {
       <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-white p-6 shadow-2xl dark:bg-slate-900 sm:p-8">
         <div className="mb-6 flex items-center justify-between">
           <Link to="/login" className="btn-soft">
-            <ArrowLeft size={17} /> {t('Login', 'Login')}
+            <ArrowLeft size={17} /> {t('લોગિન', 'Login')}
           </Link>
           <LanguageSelector />
         </div>
@@ -153,24 +153,24 @@ export function ForgotPasswordPage() {
           </div>
           <h1 className="text-3xl font-black">
             {step === 'email'
-              ? t('Forgot password?', 'Forgot password?')
+              ? t('પાસવર્ડ ભૂલી ગયા?', 'Forgot password?')
               : step === 'otp'
-                ? t('Verify OTP', 'Verify OTP')
-                : t('Reset password', 'Reset password')}
+                ? t('OTP ચકાસો', 'Verify OTP')
+                : t('પાસવર્ડ રીસેટ કરો', 'Reset password')}
           </h1>
           <p className="mt-2 text-sm leading-6 text-gray-500">
             {step === 'email'
-              ? t('Enter your account email. We will send a six-digit OTP.', 'Enter your account email. We will send a six-digit OTP.')
+              ? t('તમારું એકાઉન્ટ ઈમેઈલ દાખલ કરો. અમે છ અંકનો OTP મોકલીશું.', 'Enter your account email. We will send a six-digit OTP.')
               : step === 'otp'
                 ? t(`Enter the OTP sent to ${email}.`, `Enter the OTP sent to ${email}.`)
-                : t('OTP verified. Create your new password.', 'OTP verified. Create your new password.')}
+                : t('OTP ચકાસાઈ ગયો. તમારો નવો પાસવર્ડ બનાવો.', 'OTP verified. Create your new password.')}
           </p>
         </div>
 
         {step === 'email' ? (
           <form onSubmit={requestOtp} className="space-y-5">
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{t('Email address', 'Email address')}</span>
+              <span className="mb-2 block text-sm font-bold">{t('ઈમેઈલ સરનામું', 'Email address')}</span>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
@@ -187,13 +187,13 @@ export function ForgotPasswordPage() {
             </label>
             <button className="btn-primary h-12 w-full" disabled={loading}>
               <Mail size={18} />
-              {loading ? t('Sending...', 'Sending...') : t('Send OTP', 'Send OTP')}
+              {loading ? t('મોકલી રહ્યું છે...', 'Sending...') : t('OTP મોકલો', 'Send OTP')}
             </button>
           </form>
         ) : step === 'otp' ? (
           <form onSubmit={verifyOtp} className="space-y-4">
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{t('Six-digit OTP', 'Six-digit OTP')}</span>
+              <span className="mb-2 block text-sm font-bold">{t('છ અંકનો OTP', 'Six-digit OTP')}</span>
               <input
                 className="input h-14 text-center text-2xl font-black tracking-[0.45em]"
                 value={otp}
@@ -207,7 +207,7 @@ export function ForgotPasswordPage() {
             </label>
             <button className="btn-primary h-12 w-full" disabled={loading}>
               <ShieldCheck size={18} />
-              {loading ? t('Verifying...', 'Verifying...') : t('Verify OTP', 'Verify OTP')}
+              {loading ? t('ચકાસી રહ્યું છે...', 'Verifying...') : t('OTP ચકાસો', 'Verify OTP')}
             </button>
             <button
               type="button"
@@ -217,16 +217,16 @@ export function ForgotPasswordPage() {
             >
               {resendSeconds > 0
                 ? t(`Send code again in ${resendSeconds}s`, `Send code again in ${resendSeconds}s`)
-                : t('Send code again', 'Send code again')}
+                : t('કોડ ફરી મોકલો', 'Send code again')}
             </button>
             <button type="button" className="w-full text-sm font-bold text-teal-700 hover:underline" onClick={changeEmail} disabled={loading}>
-              {t('Change email address', 'Change email address')}
+              {t('ઈમેઈલ સરનામું બદલો', 'Change email address')}
             </button>
           </form>
         ) : (
           <form onSubmit={resetPassword} className="space-y-4">
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{t('New password', 'New password')}</span>
+              <span className="mb-2 block text-sm font-bold">{t('નવો પાસવર્ડ', 'New password')}</span>
               <PasswordInput
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
@@ -236,7 +236,7 @@ export function ForgotPasswordPage() {
               />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">{t('Confirm password', 'Confirm password')}</span>
+              <span className="mb-2 block text-sm font-bold">{t('પાસવર્ડની પુષ્ટિ કરો', 'Confirm password')}</span>
               <PasswordInput
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
@@ -247,10 +247,10 @@ export function ForgotPasswordPage() {
             </label>
             <button className="btn-primary h-12 w-full" disabled={loading}>
               <KeyRound size={18} />
-              {loading ? t('Resetting...', 'Resetting...') : t('Reset password', 'Reset password')}
+              {loading ? t('રીસેટ થઈ રહ્યું છે...', 'Resetting...') : t('પાસવર્ડ રીસેટ કરો', 'Reset password')}
             </button>
             <button type="button" className="btn-soft w-full" onClick={() => setStep('otp')} disabled={loading}>
-              {t('Verify a different OTP', 'Verify a different OTP')}
+              {t('બીજો OTP ચકાસો', 'Verify a different OTP')}
             </button>
           </form>
         )}
