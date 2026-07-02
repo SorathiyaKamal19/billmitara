@@ -239,7 +239,7 @@ export function BillingPage() {
       <div className="print-bill glass rounded-lg p-6">
         <div className="border-b border-dashed border-gray-300 pb-5 text-center dark:border-white/20">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-saffron">
-            {t("Tax Invoice", "Tax Invoice")}
+            {t("ટેક્સ ઇન્વોઇસ", "Tax Invoice")}
           </p>
           <h1 className="mt-2 text-3xl font-black leading-tight">
             {restaurant.name || user?.restaurant?.name || "BillMitara"}
@@ -260,30 +260,30 @@ export function BillingPage() {
         <div className="mt-5 grid gap-3 rounded-lg border border-gray-200 bg-white p-4 text-sm dark:border-white/10 dark:bg-white/5 sm:grid-cols-2">
           <div>
             <p className="text-xs font-bold uppercase text-gray-500">
-              {t("Bill No.", "Bill No.")}
+              {t("બિલ નં.", "Bill No.")}
             </p>
             <p className="font-black">{billNumber}</p>
           </div>
           <div className="sm:text-right">
             <p className="text-xs font-bold uppercase text-gray-500">
-              {t("Date", "Date")}
+              {t("તારીખ", "Date")}
             </p>
             <p className="font-bold">{formatBillDateTime(billDate)}</p>
           </div>
           <div>
             <p className="text-xs font-bold uppercase text-gray-500">
-              {t("Customer", "Customer")}
+              {t("ગ્રાહક", "Customer")}
             </p>
             <p className="font-bold">{guestName}</p>
             <p className="text-gray-500">{guestMobile}</p>
           </div>
           <div className="sm:text-right">
             <p className="text-xs font-bold uppercase text-gray-500">
-              {t("Service", "Service")}
+              {t("સેવા", "Service")}
             </p>
             <p className="font-bold">{serviceLabel}</p>
             <p className="text-gray-500">
-              {t("Payment", "Payment")}: {paymentText}
+              {t("પેમેન્ટ", "Payment")}: {paymentText}
             </p>
           </div>
         </div>
@@ -308,10 +308,10 @@ export function BillingPage() {
         </div>
         <div className="print-items mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-white/5">
           <div className="grid grid-cols-[1fr_48px_72px_90px] gap-2 border-b border-gray-200 px-4 py-3 text-xs font-black uppercase text-gray-500 dark:border-white/10">
-            <span>{t("Item", "Item")}</span>
-            <span className="text-center">{t("Qty", "Qty")}</span>
-            <span className="text-right">{t("Rate", "Rate")}</span>
-            <span className="text-right">{t("Amount", "Amount")}</span>
+            <span>{t("વસ્તુ", "Item")}</span>
+            <span className="text-center">{t("જથ્થો", "Qty")}</span>
+            <span className="text-right">{t("દર", "Rate")}</span>
+            <span className="text-right">{t("રકમ", "Amount")}</span>
           </div>
           {editedItems.map((item, index) => (
             <div
@@ -456,15 +456,15 @@ export function BillingPage() {
         />
         <div className="mt-6 border-t border-dashed border-gray-300 pt-4 text-center text-xs text-gray-500 dark:border-white/20">
           <p className="font-bold text-gray-700 dark:text-gray-200">
-            {t("Thank you. Please visit again.", "Thank you. Please visit again.")}
+            {t("આભાર. ફરી મુલાકાત લેજો.", "Thank you. Please visit again.")}
           </p>
-          <p className="mt-1">{t("Powered by BillMitara", "Powered by BillMitara")}</p>
+          <p className="mt-1">{t("BillMitara દ્વારા સંચાલિત", "Powered by BillMitara")}</p>
         </div>
       </div>
       <aside className="no-print glass h-fit rounded-lg p-5">
         <h2 className="text-xl font-black">{t("બિલ ક્રિયાઓ", "Bill actions")}</h2>
         <p className="mt-2 text-sm text-gray-500">
-          {t("Payment confirmation is required before PDF bill generation. Add a mobile number only if you want to send the bill on WhatsApp.", "Payment confirmation is required before PDF bill generation. Add a mobile number only if you want to send the bill on WhatsApp.")}
+          {t("PDF બિલ બનાવવા પહેલાં પેમેન્ટ પુષ્ટિ જરૂરી છે. WhatsApp પર બિલ મોકલવું હોય તો જ મોબાઇલ નંબર ઉમેરો.", "Payment confirmation is required before PDF bill generation. Add a mobile number only if you want to send the bill on WhatsApp.")}
         </p>
         <button
           className="btn-primary mt-5 w-full"
@@ -482,7 +482,7 @@ export function BillingPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <MessageCircle size={18} /> {t("Send WhatsApp", "Send WhatsApp")}
+                <MessageCircle size={18} /> {t("WhatsApp મોકલો", "Send WhatsApp")}
               </a>
             )}
             <button className="btn-soft w-full" onClick={openPdf}>
@@ -495,13 +495,13 @@ export function BillingPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <ExternalLink size={18} /> {t("Customer bill page", "Customer bill page")}
+                <ExternalLink size={18} /> {t("ગ્રાહક બિલ પેજ", "Customer bill page")}
               </a>
             )}
             {invoice.qrDataUrl && (
               <div className="border-t border-gray-200 pt-4 text-center dark:border-white/10">
                 <p className="text-sm font-black">
-                  {t("Scan to view invoice", "Scan to view invoice")}
+                  {t("ઇન્વોઇસ જોવા સ્કેન કરો", "Scan to view invoice")}
                 </p>
                 <img
                   src={invoice.qrDataUrl}
@@ -548,7 +548,7 @@ export function BillingPage() {
             </p>
             <label className="mt-4 block">
               <span className="mb-1 block text-sm font-bold">
-                {t("Customer mobile", "Customer mobile")} ({t("Optional", "Optional")})
+                {t("ગ્રાહક મોબાઇલ", "Customer mobile")} ({t("વૈકલ્પિક", "Optional")})
               </span>
               <input
                 className="input"

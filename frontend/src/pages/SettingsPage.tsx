@@ -20,6 +20,7 @@ import {
 import toast from 'react-hot-toast';
 
 import { api } from '../api/client';
+import { DiscountFields } from '../components/DiscountFields';
 import { useLanguage } from '../context/LanguageContext';
 import { Restaurant } from '../types';
 
@@ -41,7 +42,12 @@ export function SettingsPage() {
     event?.preventDefault();
 
     if ((settings.name || '').trim().length > 30) {
-      toast.error(t('Restaurant name must be 30 characters or less', 'Restaurant name must be 30 characters or less'));
+      toast.error(t('રેસ્ટોરન્ટનું નામ 30 અક્ષર કે તેથી ઓછું હોવું જોઈએ', 'Restaurant name must be 30 characters or less'));
+      return;
+    }
+
+    if (settings.defaultDiscountType === 'percentage' && Number(settings.defaultDiscountValue || 0) > 100) {
+      toast.error(t('ડિસ્કાઉન્ટ ટકા 100 કરતાં વધારે ન હોઈ શકે', 'Discount percentage cannot be more than 100'));
       return;
     }
 
@@ -339,6 +345,53 @@ export function SettingsPage() {
             </div>
           </div>
 
+          {/* DEFAULT DISCOUNT */}
+
+          <div className="glass rounded-3xl border border-white/10 p-6 shadow-soft">
+            <div className="mb-6 flex items-center gap-4">
+              <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-600">
+                <Percent size={24} />
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-black">
+                  {t('ડિફોલ્ટ બિલ ડિસ્કાઉન્ટ', 'Default Bill Discount')}
+                </h2>
+
+                <p className="text-sm text-gray-500">
+                  {t('આગામી બધા બિલમાં રેસ્ટોરન્ટ ડિસ્કાઉન્ટ લાગુ કરો.', 'Apply a restaurant-wide discount to future bills.')}
+                </p>
+              </div>
+            </div>
+
+            <DiscountFields
+              discountType={settings.defaultDiscountType || 'fixed'}
+              discountValue={settings.defaultDiscountValue || 0}
+              discountReason={settings.defaultDiscountReason || ''}
+              reasonLabel={t('ડિસ્કાઉન્ટનું નામ', 'Discount name')}
+              reasonPlaceholder={t('તહેવાર ડિસ્કાઉન્ટ', 'Festive discount')}
+              alwaysShowReason
+              onTypeChange={(type) =>
+                setSettings({
+                  ...settings,
+                  defaultDiscountType: type
+                })
+              }
+              onValueChange={(value) =>
+                setSettings({
+                  ...settings,
+                  defaultDiscountValue: value
+                })
+              }
+              onReasonChange={(reason) =>
+                setSettings({
+                  ...settings,
+                  defaultDiscountReason: reason
+                })
+              }
+            />
+          </div>
+
           {/* TAKEAWAY */}
 
           <div className="glass rounded-3xl border border-white/10 p-6 shadow-soft">
@@ -477,6 +530,19 @@ export function SettingsPage() {
                   {settings.parcelCharge ??
                     settings.takeawayCharge ??
                     0}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 dark:bg-white/5">
+                <span className="text-sm">
+                  {t('ડિફોલ્ટ ડિસ્કાઉન્ટ', 'Default Discount')}
+                </span>
+
+                <span className="font-black">
+                  {settings.defaultDiscountType === 'percentage'
+                    ? `${settings.defaultDiscountValue || 0}%`
+                    : `Rs. ${settings.defaultDiscountValue || 0}`}
+                  {settings.defaultDiscountReason ? ` - ${settings.defaultDiscountReason}` : ''}
                 </span>
               </div>
             </div>

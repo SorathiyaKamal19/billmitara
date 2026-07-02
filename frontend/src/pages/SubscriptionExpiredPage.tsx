@@ -1,9 +1,11 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { LogOut, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export function SubscriptionExpiredPage() {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   if (user?.role === 'superadmin') return <Navigate to="/superadmin" replace />;
@@ -19,18 +21,18 @@ export function SubscriptionExpiredPage() {
         <div className="grid size-14 place-items-center rounded-lg bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300">
           <ShieldAlert size={28} />
         </div>
-        <p className="mt-6 text-sm font-black uppercase tracking-widest text-red-600">Subscription over</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight">Your subscription is over.</h1>
+        <p className="mt-6 text-sm font-black uppercase tracking-widest text-red-600">{t('સબ્સ્ક્રિપ્શન પૂર્ણ થયું', 'Subscription over')}</p>
+        <h1 className="mt-2 text-3xl font-black tracking-tight">{t('તમારું સબ્સ્ક્રિપ્શન પૂર્ણ થયું છે.', 'Your subscription is over.')}</h1>
         <p className="mt-3 text-sm leading-6 text-gray-500 dark:text-gray-400">
-          Please contact admin to renew your BillMitara access. Once admin enables your subscription, you can sign in and continue using the application.
+          {t('તમારો BillMitara એક્સેસ રિન્યુ કરવા માટે એડમિનનો સંપર્ક કરો. એડમિન સબ્સ્ક્રિપ્શન ચાલુ કર્યા પછી તમે સાઇન ઇન કરી એપ વાપરી શકશો.', 'Please contact admin to renew your BillMitara access. Once admin enables your subscription, you can sign in and continue using the application.')}
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button className="btn-primary" onClick={handleLogout}>
             <LogOut size={17} />
-            Logout
+            {t('લોગઆઉટ', 'Logout')}
           </button>
           <Link className="btn-soft" to="/login">
-            Back to login
+            {t('લોગિન પર પાછા જાઓ', 'Back to login')}
           </Link>
         </div>
       </div>

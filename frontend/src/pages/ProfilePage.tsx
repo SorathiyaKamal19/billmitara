@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import * as yup from 'yup';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { PasswordInput } from '../components/PasswordInput';
 
 const profileSchema = yup.object({
@@ -18,6 +19,7 @@ const passwordSchema = yup.object({
 
 export function ProfilePage() {
   const { user, updateUser } = useAuth();
+  const { t } = useLanguage();
   const [profile, setProfile] = useState({
     name: user?.name || '',
     phone: user?.phone || ''
@@ -37,12 +39,12 @@ export function ProfilePage() {
       const values = await profileSchema.validate(profile, { abortEarly: false });
       const { data } = await api.patch('/auth/profile', values);
       updateUser(data);
-      toast.success('Profile updated');
+      toast.success(t('પ્રોફાઇલ અપડેટ થઈ', 'Profile updated'));
     } catch (error: any) {
       if (error.name === 'ValidationError') {
         toast.error(error.errors[0]);
       } else {
-        toast.error(error.response?.data?.message || 'Could not update profile');
+        toast.error(error.response?.data?.message || t('પ્રોફાઇલ અપડેટ કરી શકાઈ નહીં', 'Could not update profile'));
       }
     } finally {
       setSavingProfile(false);
@@ -59,12 +61,12 @@ export function ProfilePage() {
         newPassword: values.newPassword
       });
       setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      toast.success('Password changed');
+      toast.success(t('પાસવર્ડ બદલાયો', 'Password changed'));
     } catch (error: any) {
       if (error.name === 'ValidationError') {
         toast.error(error.errors[0]);
       } else {
-        toast.error(error.response?.data?.message || 'Could not change password');
+        toast.error(error.response?.data?.message || t('પાસવર્ડ બદલી શકાયો નહીં', 'Could not change password'));
       }
     } finally {
       setSavingPassword(false);
@@ -74,9 +76,9 @@ export function ProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-bold uppercase tracking-wider text-saffron">Account</p>
-        <h1 className="text-3xl font-black tracking-tight">User profile</h1>
-        <p className="mt-1 text-sm text-gray-500">Update your details and password.</p>
+        <p className="text-sm font-bold uppercase tracking-wider text-saffron">{t('એકાઉન્ટ', 'Account')}</p>
+        <h1 className="text-3xl font-black tracking-tight">{t('વપરાશકર્તા પ્રોફાઇલ', 'User profile')}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t('તમારી વિગતો અને પાસવર્ડ અપડેટ કરો.', 'Update your details and password.')}</p>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -86,27 +88,27 @@ export function ProfilePage() {
               <UserRound />
             </div>
             <div>
-              <p className="text-xl font-black">Profile details</p>
+              <p className="text-xl font-black">{t('પ્રોફાઇલ વિગતો', 'Profile details')}</p>
               <p className="text-sm capitalize text-gray-500">{user?.role} at {user?.restaurant?.name}</p>
             </div>
           </div>
           <div className="space-y-4">
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">Name</span>
+              <span className="mb-2 block text-sm font-bold">{t('નામ', 'Name')}</span>
               <input className="input" value={profile.name} onChange={(e) => setProfile((current) => ({ ...current, name: e.target.value }))} required />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">Email</span>
+              <span className="mb-2 block text-sm font-bold">{t('ઈમેઈલ', 'Email')}</span>
               <input className="input" value={user?.email || ''} disabled />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">Mobile</span>
+              <span className="mb-2 block text-sm font-bold">{t('મોબાઇલ', 'Mobile')}</span>
               <input className="input" value={user?.phone || ''} disabled />
             </label>
             <div className="flex justify-end">
               <button disabled={savingProfile} className="btn-primary">
                 <Save size={17} />
-                {savingProfile ? 'Saving...' : 'Save profile'}
+                {savingProfile ? t('સાચવી રહ્યું છે...', 'Saving...') : t('પ્રોફાઇલ સાચવો', 'Save profile')}
               </button>
             </div>
           </div>
@@ -118,27 +120,27 @@ export function ProfilePage() {
               <KeyRound />
             </div>
             <div>
-              <p className="text-xl font-black">Change password</p>
-              <p className="text-sm text-gray-500">Use at least 8 characters.</p>
+              <p className="text-xl font-black">{t('પાસવર્ડ બદલો', 'Change password')}</p>
+              <p className="text-sm text-gray-500">{t('ઓછામાં ઓછા 8 અક્ષરો વાપરો.', 'Use at least 8 characters.')}</p>
             </div>
           </div>
           <div className="space-y-4">
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">Current password</span>
+              <span className="mb-2 block text-sm font-bold">{t('હાલનો પાસવર્ડ', 'Current password')}</span>
               <PasswordInput value={passwords.currentPassword} onChange={(e) => setPasswords((current) => ({ ...current, currentPassword: e.target.value }))} minLength={8} autoComplete="current-password" required />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">New password</span>
+              <span className="mb-2 block text-sm font-bold">{t('નવો પાસવર્ડ', 'New password')}</span>
               <PasswordInput value={passwords.newPassword} onChange={(e) => setPasswords((current) => ({ ...current, newPassword: e.target.value }))} minLength={8} autoComplete="new-password" required />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-bold">Confirm password</span>
+              <span className="mb-2 block text-sm font-bold">{t('પાસવર્ડની પુષ્ટિ કરો', 'Confirm password')}</span>
               <PasswordInput value={passwords.confirmPassword} onChange={(e) => setPasswords((current) => ({ ...current, confirmPassword: e.target.value }))} minLength={8} autoComplete="new-password" required />
             </label>
             <div className="flex justify-end">
               <button disabled={savingPassword} className="btn-primary">
                 <KeyRound size={17} />
-                {savingPassword ? 'Changing...' : 'Change password'}
+                {savingPassword ? t('બદલી રહ્યું છે...', 'Changing...') : t('પાસવર્ડ બદલો', 'Change password')}
               </button>
             </div>
           </div>

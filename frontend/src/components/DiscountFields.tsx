@@ -7,6 +7,9 @@ interface DiscountFieldsProps {
   onTypeChange: (type: 'fixed' | 'percentage') => void;
   onValueChange: (value: number) => void;
   onReasonChange?: (reason: string) => void;
+  reasonLabel?: string;
+  reasonPlaceholder?: string;
+  alwaysShowReason?: boolean;
   compact?: boolean;
 }
 
@@ -17,6 +20,9 @@ export function DiscountFields({
   onTypeChange,
   onValueChange,
   onReasonChange,
+  reasonLabel,
+  reasonPlaceholder,
+  alwaysShowReason = false,
   compact = false
 }: DiscountFieldsProps) {
   const { t } = useLanguage();
@@ -32,33 +38,36 @@ export function DiscountFields({
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[120px] flex-1">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-saffron">
-            {discountType === 'fixed' ? '₹' : '%'}
+            {discountType === 'fixed' ? 'Rs.' : '%'}
           </span>
           <input
-            className="input pl-9"
+            className="input pl-12"
             type="number"
             min={0}
             placeholder={discountType === 'fixed' ? t('રકમ', 'Amount') : t('ટકા', 'Percentage')}
             value={discountValue || ''}
-            onChange={(e) => onValueChange(Number(e.target.value))}
+            onChange={(event) => onValueChange(Number(event.target.value))}
           />
         </div>
         <select
           className="input w-[150px]"
           value={discountType}
-          onChange={(e) => onTypeChange(e.target.value as 'fixed' | 'percentage')}
+          onChange={(event) => onTypeChange(event.target.value as 'fixed' | 'percentage')}
         >
-          <option value="fixed">{t('રકમ (₹)', 'Amount (₹)')}</option>
+          <option value="fixed">{t('રકમ (રૂ.)', 'Amount (Rs.)')}</option>
           <option value="percentage">{t('ટકા (%)', 'Percentage (%)')}</option>
         </select>
       </div>
-      {onReasonChange && discountValue > 0 && (
-        <input
-          className="input"
-          placeholder={t('ડિસ્કાઉન્ટનું કારણ (વૈકલ્પિક)', 'Reason for discount (optional)')}
-          value={discountReason}
-          onChange={(e) => onReasonChange(e.target.value)}
-        />
+      {onReasonChange && (alwaysShowReason || discountValue > 0) && (
+        <label className="block">
+          {reasonLabel && <span className="mb-1 block text-sm font-bold">{reasonLabel}</span>}
+          <input
+            className="input"
+            placeholder={reasonPlaceholder || t('ડિસ્કાઉન્ટનું નામ અથવા કારણ (વૈકલ્પિક)', 'Reason for discount (optional)')}
+            value={discountReason}
+            onChange={(event) => onReasonChange(event.target.value)}
+          />
+        </label>
       )}
     </div>
   );

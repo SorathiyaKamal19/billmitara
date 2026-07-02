@@ -15,8 +15,8 @@ const orderSchema = z.object({
   customerName: z.string().trim().min(1, 'Customer name is required'),
   customerMobile: z.string().optional(),
   notes: z.string().optional(),
-  discountType: z.enum(['fixed', 'percentage']).default('fixed'),
-  discountValue: z.number().nonnegative().default(0),
+  discountType: z.enum(['fixed', 'percentage']).optional(),
+  discountValue: z.number().nonnegative().optional(),
   discount: z.number().nonnegative().optional(),
   discountReason: z.string().optional(),
   customerMobile: z.string().optional(),
@@ -111,9 +111,13 @@ export const createOrder = asyncHandler(async (req, res) => {
   const items = await hydrateItems(input.items, req.user.restaurant);
   const defaultCharge = restaurant.parcelCharge || restaurant.takeawayCharge;
   const takeawayCharge = input.type === 'takeaway' && restaurant.takeawayChargeEnabled ? input.takeawayCharge ?? defaultCharge : 0;
+  const hasOrderDiscount = input.discountValue !== undefined || input.discount !== undefined;
+  const discountType = hasOrderDiscount ? input.discountType ?? 'fixed' : restaurant.defaultDiscountType || 'fixed';
+  const discountValue = hasOrderDiscount ? input.discountValue ?? input.discount ?? 0 : restaurant.defaultDiscountValue || 0;
+  const discountReason = hasOrderDiscount ? input.discountReason?.trim() : restaurant.defaultDiscountReason?.trim();
   const totals = calculateOrderTotals(items, {
-    discountType: input.discountType,
-    discountValue: input.discountValue ?? input.discount ?? 0,
+    discountType,
+    discountValue,
     takeawayCharge,
     gstEnabled: restaurant.gstEnabled !== false,
     gstRate: restaurant.gstRate
@@ -133,7 +137,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     customerName: input.customerName,
     customerMobile: input.customerMobile?.trim(),
     notes: input.notes,
-    discountReason: input.discountReason?.trim(),
+    discountReason: discountValue > 0 ? discountReason : undefined,
     createdBy: req.user._id,
     items,
     ...totals,

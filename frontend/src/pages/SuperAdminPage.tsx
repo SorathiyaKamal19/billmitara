@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { ToggleSwitch } from '../components/ToggleSwitch';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { SupportTicket, User } from '../types';
 
 type OwnerAccount = User & {
@@ -29,6 +30,7 @@ function ticketKey(ticketId: string) {
 
 export function SuperAdminPage() {
   const { logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [owners, setOwners] = useState<OwnerAccount[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
@@ -75,10 +77,10 @@ export function SuperAdminPage() {
     return { subscribed, expired: owners.length - subscribed, openTickets };
   }, [owners, supportTickets]);
   const statCards: { label: string; value: number; icon: LucideIcon }[] = [
-    { label: 'Total owners', value: owners.length, icon: UsersRound },
-    { label: 'Subscribed', value: stats.subscribed, icon: ShieldCheck },
-    { label: 'Expired', value: stats.expired, icon: Building2 },
-    { label: 'Open tickets', value: stats.openTickets, icon: LifeBuoy }
+    { label: t('કુલ માલિકો', 'Total owners'), value: owners.length, icon: UsersRound },
+    { label: t('સબ્સ્ક્રાઇબ થયેલા', 'Subscribed'), value: stats.subscribed, icon: ShieldCheck },
+    { label: t('સમાપ્ત', 'Expired'), value: stats.expired, icon: Building2 },
+    { label: t('ખુલ્લી ટિકિટો', 'Open tickets'), value: stats.openTickets, icon: LifeBuoy }
   ];
 
   async function loadOwners() {
@@ -87,7 +89,7 @@ export function SuperAdminPage() {
       const { data } = await api.get('/superadmin/owners');
       setOwners(data);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Could not load owners');
+      toast.error(error.response?.data?.message || t('માલિકો લોડ થઈ શક્યા નહીં', 'Could not load owners'));
     } finally {
       setLoading(false);
     }
@@ -99,7 +101,7 @@ export function SuperAdminPage() {
       const { data } = await api.get('/support');
       setSupportTickets(data);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Could not load support tickets');
+      toast.error(error.response?.data?.message || t('સપોર્ટ ટિકિટો લોડ થઈ શકી નહીં', 'Could not load support tickets'));
     } finally {
       setTicketsLoading(false);
     }
@@ -118,9 +120,9 @@ export function SuperAdminPage() {
     try {
       const { data } = await api.patch(`/superadmin/owners/${owner._id}`, patch);
       setOwners((current) => current.map((row) => (row._id === owner._id ? { ...row, ...data, staffCount: row.staffCount } : row)));
-      toast.success('Owner access updated');
+      toast.success(t('માલિક એક્સેસ અપડેટ થયો', 'Owner access updated'));
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Could not update owner access');
+      toast.error(error.response?.data?.message || t('માલિક એક્સેસ અપડેટ થઈ શક્યો નહીં', 'Could not update owner access'));
     } finally {
       setUpdatingId(null);
     }
@@ -131,9 +133,9 @@ export function SuperAdminPage() {
     try {
       const { data } = await api.patch(`/support/${ticket._id}/close`);
       setSupportTickets((current) => current.map((row) => (row._id === ticket._id ? data : row)));
-      toast.success(`${ticketKey(ticket._id)} closed`);
+      toast.success(`${ticketKey(ticket._id)} ${t('બંધ થઈ', 'closed')}`);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Could not close support ticket');
+      toast.error(error.response?.data?.message || t('સપોર્ટ ટિકિટ બંધ કરી શકાઈ નહીં', 'Could not close support ticket'));
     } finally {
       setClosingTicketId(null);
     }
@@ -154,17 +156,17 @@ export function SuperAdminPage() {
             </div>
             <div>
               <p className="text-sm font-bold uppercase tracking-widest text-white/60">BillMitara</p>
-              <h1 className="text-2xl font-black tracking-tight">Superadmin panel</h1>
+              <h1 className="text-2xl font-black tracking-tight">{t('સુપરએડમિન પેનલ', 'Superadmin panel')}</h1>
             </div>
           </div>
           <div className="flex gap-2">
             <button className="btn-soft border-white/10 bg-white/10 text-white hover:bg-white/15" onClick={loadAll} disabled={loading || ticketsLoading}>
               <RefreshCw size={17} className={loading || ticketsLoading ? 'animate-spin' : ''} />
-              Refresh
+              {t('રીફ્રેશ', 'Refresh')}
             </button>
             <button className="btn-soft border-white/10 bg-white/10 text-white hover:bg-white/15" onClick={handleLogout}>
               <LogOut size={17} />
-              Logout
+              {t('લોગઆઉટ', 'Logout')}
             </button>
           </div>
         </header>
@@ -184,8 +186,8 @@ export function SuperAdminPage() {
         <section className="glass overflow-hidden rounded-lg">
           <div className="flex flex-col gap-3 border-b border-gray-200 p-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-xl font-black">Support tickets</h2>
-              <p className="text-sm text-gray-500">Close solved tickets to stop 24-hour admin reminder emails.</p>
+              <h2 className="text-xl font-black">{t('સપોર્ટ ટિકિટો', 'Support tickets')}</h2>
+              <p className="text-sm text-gray-500">{t('24-કલાકના એડમિન રિમાઇન્ડર ઈમેઈલ બંધ કરવા માટે ઉકેલાયેલી ટિકિટો બંધ કરો.', 'Close solved tickets to stop 24-hour admin reminder emails.')}</p>
             </div>
             <label className="relative block w-full sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -193,7 +195,7 @@ export function SuperAdminPage() {
                 className="input pl-10"
                 value={ticketQuery}
                 onChange={(event) => setTicketQuery(event.target.value)}
-                placeholder="Search ticket, restaurant, subject"
+                placeholder={t('ટિકિટ, રેસ્ટોરન્ટ, વિષય શોધો', 'Search ticket, restaurant, subject')}
               />
             </label>
           </div>
@@ -208,20 +210,20 @@ export function SuperAdminPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-lg bg-saffron/10 px-2 py-1 text-xs font-black text-saffron">{ticketKey(ticket._id)}</span>
                       <span className={`rounded-lg px-2 py-1 text-xs font-bold ${open ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'}`}>
-                        {open ? 'Open' : 'Closed'}
+                        {open ? t('ખુલ્લી', 'Open') : t('બંધ', 'Closed')}
                       </span>
                       <span className="rounded-lg bg-gray-100 px-2 py-1 text-xs font-bold capitalize text-gray-600 dark:bg-white/10 dark:text-gray-300">{ticket.category}</span>
                     </div>
                     <h3 className="mt-3 text-lg font-black">{ticket.subject}</h3>
                     <p className="mt-1 text-sm text-gray-500">
-                      {ticket.restaurantName || 'No restaurant'} - {ticket.name || 'Unknown user'}{ticket.phone ? ` - ${ticket.phone}` : ''}
+                      {ticket.restaurantName || t('રેસ્ટોરન્ટ નથી', 'No restaurant')} - {ticket.name || t('અજાણ્યો વપરાશકર્તા', 'Unknown user')}{ticket.phone ? ` - ${ticket.phone}` : ''}
                     </p>
                     <p className="mt-3 line-clamp-3 text-sm leading-6 text-gray-600 dark:text-gray-300">{ticket.message}</p>
                     <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold text-gray-400">
-                      <span>Created {formatDateTime(ticket.createdAt)}</span>
-                      <span>Reminders {ticket.reminderCount || 0}</span>
-                      <span>Last reminder {formatDateTime(ticket.lastReminderAt)}</span>
-                      {ticket.closedAt && <span>Closed {formatDateTime(ticket.closedAt)}</span>}
+                      <span>{t('બનાવ્યું', 'Created')} {formatDateTime(ticket.createdAt)}</span>
+                      <span>{t('રિમાઇન્ડર', 'Reminders')} {ticket.reminderCount || 0}</span>
+                      <span>{t('છેલ્લું રિમાઇન્ડર', 'Last reminder')} {formatDateTime(ticket.lastReminderAt)}</span>
+                      {ticket.closedAt && <span>{t('બંધ થયું', 'Closed')} {formatDateTime(ticket.closedAt)}</span>}
                     </div>
                   </div>
                   <div className="flex justify-end">
@@ -231,7 +233,7 @@ export function SuperAdminPage() {
                       onClick={() => closeTicket(ticket)}
                     >
                       <CheckCircle2 size={17} />
-                      {open ? (disabled ? 'Closing...' : 'Close ticket') : 'Closed'}
+                      {open ? (disabled ? t('બંધ થઈ રહી છે...', 'Closing...') : t('ટિકિટ બંધ કરો', 'Close ticket')) : t('બંધ', 'Closed')}
                     </button>
                   </div>
                 </div>
@@ -239,10 +241,10 @@ export function SuperAdminPage() {
             })}
 
             {!ticketsLoading && filteredTickets.length === 0 && (
-              <div className="p-10 text-center text-sm font-bold text-gray-500">No support tickets found.</div>
+              <div className="p-10 text-center text-sm font-bold text-gray-500">{t('કોઈ સપોર્ટ ટિકિટ મળી નથી.', 'No support tickets found.')}</div>
             )}
             {ticketsLoading && (
-              <div className="p-10 text-center text-sm font-bold text-gray-500">Loading support tickets...</div>
+              <div className="p-10 text-center text-sm font-bold text-gray-500">{t('સપોર્ટ ટિકિટો લોડ થઈ રહી છે...', 'Loading support tickets...')}</div>
             )}
           </div>
         </section>
@@ -250,8 +252,8 @@ export function SuperAdminPage() {
         <section className="glass overflow-hidden rounded-lg">
           <div className="flex flex-col gap-3 border-b border-gray-200 p-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-xl font-black">Owner access</h2>
-              <p className="text-sm text-gray-500">Turn subscription on or off for each restaurant owner.</p>
+              <h2 className="text-xl font-black">{t('માલિક એક્સેસ', 'Owner access')}</h2>
+              <p className="text-sm text-gray-500">{t('દરેક રેસ્ટોરન્ટ માલિક માટે સબ્સ્ક્રિપ્શન ચાલુ કે બંધ કરો.', 'Turn subscription on or off for each restaurant owner.')}</p>
             </div>
             <label className="relative block w-full sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -259,7 +261,7 @@ export function SuperAdminPage() {
                 className="input pl-10"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search owner, phone, restaurant"
+                placeholder={t('માલિક, ફોન, રેસ્ટોરન્ટ શોધો', 'Search owner, phone, restaurant')}
               />
             </label>
           </div>
@@ -275,31 +277,31 @@ export function SuperAdminPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-black">{owner.name}</p>
                       <span className="rounded-lg bg-gray-100 px-2 py-1 text-xs font-bold text-gray-600 dark:bg-white/10 dark:text-gray-300">
-                        {owner.restaurant?.name || 'No restaurant'}
+                        {owner.restaurant?.name || t('રેસ્ટોરન્ટ નથી', 'No restaurant')}
                       </span>
                       <span className={`rounded-lg px-2 py-1 text-xs font-bold ${subscribed ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300'}`}>
-                        {subscribed ? 'Subscribed' : 'Expired'}
+                        {subscribed ? t('સબ્સ્ક્રાઇબ થયેલ', 'Subscribed') : t('સમાપ્ત', 'Expired')}
                       </span>
-                      {!active && <span className="rounded-lg bg-red-50 px-2 py-1 text-xs font-bold text-red-700 dark:bg-red-500/10 dark:text-red-300">Disabled</span>}
+                      {!active && <span className="rounded-lg bg-red-50 px-2 py-1 text-xs font-bold text-red-700 dark:bg-red-500/10 dark:text-red-300">{t('બંધ', 'Disabled')}</span>}
                     </div>
                     <p className="mt-1 truncate text-sm text-gray-500">
-                      {owner.email || 'No email'}{owner.phone ? ` - ${owner.phone}` : ''}
+                      {owner.email || t('ઈમેઈલ નથી', 'No email')}{owner.phone ? ` - ${owner.phone}` : ''}
                     </p>
                     <p className="mt-1 text-xs font-semibold text-gray-400">
-                      {owner.staffCount} staff accounts - Created {formatDate(owner.createdAt)}
+                      {owner.staffCount} {t('સ્ટાફ એકાઉન્ટ્સ', 'staff accounts')} - {t('બનાવ્યું', 'Created')} {formatDate(owner.createdAt)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-4 rounded-lg border border-gray-200 bg-white p-3 dark:border-white/10 dark:bg-white/10">
                     <ToggleSwitch
                       checked={subscribed}
                       disabled={disabled}
-                      label="Subscribed"
+                      label={t('સબ્સ્ક્રાઇબ થયેલ', 'Subscribed')}
                       onChange={(checked) => updateOwner(owner, { isSubscribed: checked })}
                     />
                     <ToggleSwitch
                       checked={active}
                       disabled={disabled}
-                      label="Active"
+                      label={t('સક્રિય', 'Active')}
                       onChange={(checked) => updateOwner(owner, { isActive: checked })}
                     />
                   </div>
@@ -308,10 +310,10 @@ export function SuperAdminPage() {
             })}
 
             {!loading && filteredOwners.length === 0 && (
-              <div className="p-10 text-center text-sm font-bold text-gray-500">No owner accounts found.</div>
+              <div className="p-10 text-center text-sm font-bold text-gray-500">{t('કોઈ માલિક એકાઉન્ટ મળ્યું નથી.', 'No owner accounts found.')}</div>
             )}
             {loading && (
-              <div className="p-10 text-center text-sm font-bold text-gray-500">Loading owner accounts...</div>
+              <div className="p-10 text-center text-sm font-bold text-gray-500">{t('માલિક એકાઉન્ટ્સ લોડ થઈ રહ્યા છે...', 'Loading owner accounts...')}</div>
             )}
           </div>
         </section>
